@@ -52,3 +52,13 @@ function ROLE:Initialize()
 		LANG.AddToLanguage('Deutsch', 'ttt2_desc_' .. PHARAOH.name, [[Der Pharao ist ein unschuldiger Spieler, der den Ankh zu seinem Vorteil nutzen muss!]])
 	end
 end
+
+if SERVER then
+	function ROLE:GiveRoleLoadout(ply, isRoleChange)
+		ply:GiveEquipmentWeapon('weapon_ttt_ankh')
+	end
+
+	function ROLE:RemoveRoleLoadout(ply, isRoleChange)
+		ply:StripWeapon('weapon_ttt_ankh')
+	end
+end
