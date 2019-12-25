@@ -30,20 +30,19 @@ end
 function ENT:Initialize()
 	self:SetModel(self.Model)
 
-	if SERVER then
-		self:PhysicsInit(SOLID_VPHYSICS)
-	end
-
+	self:PhysicsInit(SOLID_VPHYSICS)
 	self:SetSolid(SOLID_VPHYSICS)
 	self:SetCollisionGroup(COLLISION_GROUP_WEAPON)
 
+	self:WeldToGround(true)
+
 	if SERVER then
-		self:SetMaxHealth(500)
+		self:SetMaxHealth(GetGlobalInt('ttt_ankh_health'))
 
 		self:SetUseType(CONTINUOUS_USE)
 	end
 
-	self:SetHealth(500)
+	self:SetHealth(GetGlobalInt('ttt_ankh_health'))
 
 	-- can pick this up if we own it
 	if SERVER then
@@ -60,6 +59,7 @@ function ENT:Initialize()
 	PHARAOH_HANDLER:PlacedAnkh(self, self:GetOwner())
 end
 
+--[[
 function ENT:Use(activator)
 	if not IsValid(activator) then return end
 
@@ -77,10 +77,15 @@ function ENT:Use(activator)
 		self:SetNWInt('conversion_progress', (CurTime() - self.t_transfer_start) / GetGlobalInt('ttt_ankh_conversion_time') * 100)
 	end
 end
+--]]
 
 -- called on key release
 function ENT:UseOverride(activator)
+	print(tostring(activator))
+	print(tostring(self:GetOwner()))
+
 	if not IsValid(activator) then return end
+
 
 	-- activator is owner --> pick up
 	if self:GetOwner() and activator == self:GetOwner() then
@@ -111,8 +116,7 @@ function ENT:OnTakeDamage(dmginfo)
 
 	if self:Health() > 0 then return end
 
-	PHARAOH_HANDLER:RemovedAnkh(self)
-	self:Remove()
+	PHARAOH_HANDLER:DestroyAnkh(self, dmginfo:GetAttacker())
 
 	local effect = EffectData()
 	effect:SetOrigin(self:GetPos())
@@ -120,8 +124,13 @@ function ENT:OnTakeDamage(dmginfo)
 
 	sound.Play(zapsound, self:GetPos())
 
+	-- notify the current owner and his adversary that the ankh was broken
 	if IsValid(self:GetOwner()) then
 		LANG.Msg(self:GetOwner(), 'ankh_broken')
+	end
+
+	if IsValid(self:GetAdversary()) then
+		LANG.Msg(self:GetAdversary(), 'ankh_broken_adv')
 	end
 end
 
@@ -133,8 +142,64 @@ function ENT:GetAdversary()
 	return self.adversary
 end
 
+-- Copy pasted from C4
+function ENT:WeldToGround(state)
+	if self.IsOnWall then return end
+
+	if state then
+		-- getgroundentity does not work for non-players
+		-- so sweep ent downward to find what we're lying on
+		local ignore = player.GetAll()
+		ignore[#ignore + 1] = self
+
+		local tr = util.TraceEntity({
+			start = self:GetPos(),
+			endpos = self:GetPos() - Vector(0, 0, 16),
+			filter = ignore,
+			mask = MASK_SOLID
+		}, self)
+
+		-- Start by increasing weight/making uncarryable
+		local phys = self:GetPhysicsObject()
+
+		if IsValid(phys) then
+			-- Could just use a pickup flag for this. However, then it's easier to
+			-- push it around.
+			self.OrigMass = phys:GetMass()
+
+			phys:SetMass(150)
+		end
+
+		if tr.Hit and (IsValid(tr.Entity) or tr.HitWorld) then
+			-- "Attach" to a brush if possible
+			if IsValid(phys) and tr.HitWorld then
+				phys:EnableMotion(false)
+			end
+
+			-- Else weld to objects we cannot pick up
+			local entphys = tr.Entity:GetPhysicsObject()
+
+			if IsValid(entphys) and entphys:GetMass() > CARRY_WEIGHT_LIMIT then
+				constraint.Weld(self, tr.Entity, 0, 0, 0, true)
+			end
+
+			-- Worst case, we are still uncarryable
+		end
+	else
+		constraint.RemoveConstraints(self, 'Weld')
+
+		local phys = self:GetPhysicsObject()
+
+		if IsValid(phys) then
+			phys:EnableMotion(true)
+			phys:SetMass(self.OrigMass or 10)
+		end
+	end
+end
+
 if CLIENT then
 	local TryT = LANG.TryTranslation
+	local ParT = LANG.GetParamTranslation
 
 	-- handle looking at ankh
 	hook.Add('TTTRenderEntityInfo', 'HUDDrawTargetIDAnkh', function(data, params)
@@ -146,13 +211,29 @@ if CLIENT then
 		end
 
 		params.drawInfo = true
-		params.displayInfo.key = input.GetKeyCode(input.LookupBinding('+use'))
 		params.displayInfo.title.text = TryT('ttt2_weapon_ankh_name')
 
-		params.displayInfo.subtitle.text = TryT('target_pickup')
+		if client == data.ent:GetNWEntity('pharaoh', nil) then
+			params.displayInfo.key = input.GetKeyCode(input.LookupBinding('+use'))
+
+			params.displayInfo.subtitle.text = TryT('target_pickup')
+		elseif client == data.ent:GetNWEntity('pharaoh', nil) then
+			params.displayInfo.key = input.GetKeyCode(input.LookupBinding('+use'))
+
+			params.displayInfo.subtitle.text = TryT('ank_convert')
+		else
+			params.displayInfo.icon[#params.displayInfo.icon + 1] = {
+				material = PHARAOH.iconMaterial,
+				color = PHARAOH.bgcolor
+			}
+		end
 
 		params.displayInfo.desc[#params.displayInfo.desc + 1] = {
 			text = TryT('ankh_short_desc')
+		}
+
+		params.displayInfo.desc[#params.displayInfo.desc + 1] = {
+			text = ParT('ankh_health_points', {health = data.ent:Health(), maxhealth = GetGlobalInt('ttt_ankh_health')})
 		}
 
 		params.drawOutline = true
