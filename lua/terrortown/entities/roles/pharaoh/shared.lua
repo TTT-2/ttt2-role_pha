@@ -55,6 +55,8 @@ end
 
 if SERVER then
 	function ROLE:GiveRoleLoadout(ply, isRoleChange)
+		if not isRoleChange then return end
+
 		ply:GiveEquipmentWeapon('weapon_ttt_ankh')
 	end
 

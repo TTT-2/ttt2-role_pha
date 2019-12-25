@@ -4,7 +4,7 @@ end
 
 ENT.Type = 'anim'
 ENT.Model = Model('models/props_lab/reciever01b.mdl')
-ENT.CanHavePrints = false
+ENT.CanHavePrints = true
 ENT.CanUseKey = true
 
 
@@ -34,20 +34,19 @@ function ENT:Initialize()
 		self:PhysicsInit(SOLID_VPHYSICS)
 	end
 
-	self:SetMoveType(MOVETYPE_VPHYSICS)
 	self:SetSolid(SOLID_VPHYSICS)
-	self:SetCollisionGroup(COLLISION_GROUP_INTERACTIVE)
+	self:SetCollisionGroup(COLLISION_GROUP_WEAPON)
 
 	if SERVER then
-		self:SetMaxHealth(100)
+		self:SetMaxHealth(500)
+
+		self:SetUseType(CONTINUOUS_USE)
 	end
 
-	self:SetHealth(100)
+	self:SetHealth(500)
 
 	-- can pick this up if we own it
 	if SERVER then
-		self:SetUseType(SIMPLE_USE)
-
 		local weptbl = util.WeaponForClass('weapon_ttt_ankh')
 
 		if weptbl and weptbl.Kind then
@@ -61,20 +60,47 @@ function ENT:Initialize()
 	PHARAOH_HANDLER:PlacedAnkh(self, self:GetOwner())
 end
 
+function ENT:Use(activator)
+	if not IsValid(activator) then return end
+
+	-- transfer ownership after a certain time has passed and the key was pressed down
+	if not self:GetAdversary() or activator ~= self:GetAdversary() then return end
+
+	if not self.t_transfer_start then
+		t_transfer_start = CurTime()
+	end
+
+	if CurTime() - self.t_transfer_start > GetGlobalInt('ttt_ankh_conversion_time') then
+		PHARAOH_HANDLER:TransferAnkhOwnership(self, activator)
+
+		-- set progress to be available for clients
+		self:SetNWInt('conversion_progress', (CurTime() - self.t_transfer_start) / GetGlobalInt('ttt_ankh_conversion_time') * 100)
+	end
+end
+
+-- called on key release
 function ENT:UseOverride(activator)
 	if not IsValid(activator) then return end
 
-	-- picks up weapon, switches if possible and needed, returns weapon if successful
-	local wep = activator:PickupWeaponClass('weapon_ttt_ankh', true)
+	-- activator is owner --> pick up
+	if self:GetOwner() and activator == self:GetOwner() then
+		-- picks up weapon, switches if possible and needed, returns weapon if successful
+		local wep = activator:PickupWeaponClass('weapon_ttt_ankh', true)
 
-	if not IsValid(wep) then
-		LANG.Msg(activator, 'ankh_no_room')
+		if not IsValid(wep) then
+			LANG.Msg(activator, 'ankh_no_room')
 
-		return
+			return
+		end
+
+		PHARAOH_HANDLER:RemovedAnkh(self)
+		self:Remove()
 	end
 
-	PHARAOH_HANDLER:RemovedAnkh(self)
-	self:Remove()
+	-- key is released and transfer process should be stopped
+	if self:GetAdversary() and self:GetAdversary() == activator then
+		self.t_transfer_start = nil
+	end
 end
 
 local zapsound = Sound('npc/assassin/ball_zap1.wav')
@@ -85,12 +111,13 @@ function ENT:OnTakeDamage(dmginfo)
 
 	if self:Health() > 0 then return end
 
+	PHARAOH_HANDLER:RemovedAnkh(self)
 	self:Remove()
 
 	local effect = EffectData()
 	effect:SetOrigin(self:GetPos())
-
 	util.Effect('cball_explode', effect)
+
 	sound.Play(zapsound, self:GetPos())
 
 	if IsValid(self:GetOwner()) then
@@ -98,10 +125,12 @@ function ENT:OnTakeDamage(dmginfo)
 	end
 end
 
-function ENT:OnRemove()
-	if not IsValid(self:GetOwner()) then return end
+function ENT:SetAdversary(ply)
+	self.adversary = ply
+end
 
-	self:GetOwner().ankh = nil
+function ENT:GetAdversary()
+	return self.adversary
 end
 
 if CLIENT then

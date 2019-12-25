@@ -106,6 +106,7 @@ if SERVER then
 
 		ankh:SetPos(tr_ent.HitPos + ang:Forward() * 2.5)
 		ankh:SetAngles(ang)
+		ankh:SetOwner(ply)
 		ankh:Spawn()
 
 		ankh.IsOnWall = true
