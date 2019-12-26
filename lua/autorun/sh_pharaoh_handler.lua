@@ -1,5 +1,6 @@
 if SERVER then
 	util.AddNetworkString('ttt2_net_pharaoh_spawn_effects')
+	util.AddNetworkString('ttt2_net_pharaoh_wallack')
 end
 
 PHARAOH_HANDLER = {}
@@ -7,30 +8,53 @@ PHARAOH_HANDLER = {}
 function PHARAOH_HANDLER:PlacedAnkh(ent, placer)
 	if CLIENT then return end
 
+	-- first placement
+	if not placer.ankh_data then
+		-- selecting a graverobber, the adversary of the pharaoh
+		local p_graverobber = self:SelectGraverobber()
+
+		-- if a valid player is found, he should be converted
+		if p_graverobber then
+			p_graverobber:SetRole(ROLE_GRAVEROBBER)
+			SendFullStateUpdate()
+		end
+
+		-- store ankh information to the players as well
+		placer.ankh = ent
+		if p_graverobber then
+			p_graverobber.ankh = ent
+		end
+
+		-- set up data element
+		placer.ankh_data = {
+			pharaoh = placer,
+			graverobber = p_graverobber,
+			owner = placer,
+			adversary = p_graverobber,
+			health = GetGlobalInt('ttt_ankh_health')
+		}
+	end
+
+	-- set the hp of the ankh
+	ent:SetHealth(placer.ankh_data.health)
+
 	-- drawing the decal on the ground
-	self:AddDecal(ent, 'rune_pharaoh')
-
-	-- selecting a graverobber, the adversary of the pharaoh
-	local p_graverobber = self:SelectGraverobber()
-
-	-- if a valid player is found, he shoudl be converted
-	if p_graverobber then
-		p_graverobber:SetRole(ROLE_GRAVEROBBER)
+	if placer:GetSubRole() == ROLE_PHARAOH then
+		self:AddDecal(ent, 'rune_pharaoh')
+	else
+		self:AddDecal(ent, 'rune_graverobber')
 	end
 
 	-- setting the graverobber and pharao to this specific ankh
-	ent:SetNWEntity('pharaoh', placer)
-	ent:SetNWEntity('graverobber', p_graverobber)
+	ent:SetNWEntity('pharaoh', placer.ankh_data.pharaoh)
+	ent:SetNWEntity('graverobber', placer.ankh_data.graverobber)
 
 	-- set new owner of ankh
-	ent:SetOwner(placer)
-	ent:SetAdversary(p_graverobber)
+	ent:SetOwner(placer.ankh_data.owner)
+	ent:SetAdversary(placer.ankh_data.adversary)
 
-	-- store ankh information to the players as well
-	placer.ankh = ent
-	if p_graverobber then
-		p_graverobber.ankh = ent
-	end
+	-- add wallhack
+	self:AddWallhack(ent, placer)
 end
 
 function PHARAOH_HANDLER:TransferAnkhOwnership(ent, ply)
@@ -51,6 +75,24 @@ function PHARAOH_HANDLER:TransferAnkhOwnership(ent, ply)
 	if ply == ent:GetNWEntity('graverobber') then
 		self:AddDecal(ent, 'rune_graverobber')
 	end
+
+	-- update wallhacks
+	self:RemoveWallhack(ent, ent:GetAdversary())
+	self:AddWallhack(ent, ent:GetOwner())
+end
+
+function PHARAOH_HANDLER:AddWallhack(ent, ply)
+	net.Start('ttt2_net_pharaoh_wallack')
+	net.WriteBool(true)
+	net.WriteEntity(ent)
+	net.Send(ply)
+end
+
+function PHARAOH_HANDLER:RemoveWallhack(ent, ply)
+	net.Start('ttt2_net_pharaoh_wallack')
+	net.WriteBool(false)
+	net.WriteEntity(ent)
+	net.Send(ply)
 end
 
 function PHARAOH_HANDLER:DestroyAnkh(ent, ply)
@@ -67,6 +109,9 @@ function PHARAOH_HANDLER:RemovedAnkh(ent)
 
 	-- replace decal with inactive decal
 	self:RemoveDecal(ent)
+
+	-- remove wallhack
+	self:RemoveWallhack(ent, ent:GetOwner())
 end
 
 function PHARAOH_HANDLER:AddDecal(ent, type)
@@ -149,6 +194,14 @@ if CLIENT then
 
 		em:Finish()
 	end)
+
+	net.Receive('ttt2_net_pharaoh_wallack', function()
+		if net.ReadBool() then
+			marks.Add({net.ReadEntity()}, LocalPlayer():GetRoleColor())
+		else
+			marks.Remove({net.ReadEntity()})
+		end
+	end)
 end
 
 ---
@@ -189,7 +242,7 @@ hook.Add('TTT2PostPlayerDeath', 'ttt2_role_pharaoh_death', function(victim, infl
 	if GetRoundState() ~= ROUND_ACTIVE then return end
 
 	-- victim must be either a pharaoh or graverobber with an ankh
-	if not IsValid(victim) or not victim.ankh then return end
+	if not IsValid(victim) or not IsValid(victim.ankh) then return end
 
 	-- the victim must be the current owner of the ankh
 	if victim ~= victim.ankh:GetOwner() then return end
@@ -218,4 +271,10 @@ hook.Add('TTT2PostPlayerDeath', 'ttt2_role_pharaoh_death', function(victim, infl
 	function(ply)
 		-- on fail todo
 	end)
+end)
+
+hook.Add('TTTBeginRound', 'ttt2_role_pharaoh_reset', function()
+	for _, p in pairs(player.GetAll()) do
+		p.ankh_data = nil
+	end
 end)

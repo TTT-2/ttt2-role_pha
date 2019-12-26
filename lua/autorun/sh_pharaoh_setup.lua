@@ -25,6 +25,9 @@ if CLIENT then
 		LANG.AddToLanguage('English', 'ankh_health_points', 'Health: {health} / {maxhealth}')
 		LANG.AddToLanguage('Deutsch', 'ankh_health_points', 'Leben: {health} / {maxhealth}')
 
+		LANG.AddToLanguage('English', 'ankh_progress', 'Conversion Progress: {progress}%')
+		LANG.AddToLanguage('Deutsch', 'ankh_progress', 'Übernahmefortschritt: {progress}%')
+
 		LANG.AddToLanguage('English', 'ankh_broken', 'Your ankh was broken.')
 		LANG.AddToLanguage('Deutsch', 'ankh_broken', 'Dein Ankh wurde zerstört.')
 

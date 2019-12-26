@@ -42,8 +42,6 @@ function ENT:Initialize()
 		self:SetUseType(CONTINUOUS_USE)
 	end
 
-	self:SetHealth(GetGlobalInt('ttt_ankh_health'))
-
 	-- can pick this up if we own it
 	if SERVER then
 		local weptbl = util.WeaponForClass('weapon_ttt_ankh')
@@ -57,38 +55,64 @@ function ENT:Initialize()
 
 	-- start ankh handling
 	PHARAOH_HANDLER:PlacedAnkh(self, self:GetOwner())
+	self:GetOwner().ankh_data = nil
 end
 
---[[
-function ENT:Use(activator)
+function ENT:UpdateProgress()
+	local elapsed_time = self.t_transfer_start and (CurTime() - self.t_transfer_start) or 0
+
+	self:SetNWInt('conversion_progress', math.Round(elapsed_time / GetGlobalInt('ttt_ankh_conversion_time') * 100, 0))
+end
+
+if SERVER then
+	function ENT:Think()
+		if not IsValid(self.last_activatotor) then return end
+
+		local tr = util.TraceLine({
+			start = self.last_activatotor:GetShootPos(),
+			endpos = self.last_activatotor:GetShootPos() + self.last_activatotor:GetAimVector() * 100,
+			filter = self.last_activatotor,
+			mask = MASK_SHOT
+		})
+
+		if tr.Entity ~= self or not self.last_activatotor:KeyDown(IN_USE) then
+			self.last_activatotor = nil
+			self.t_transfer_start = nil
+
+			-- set progress to be available for clients
+			self:UpdateProgress()
+		end
+	end
+end
+
+function ENT:Use(activator, caller, type, value)
 	if not IsValid(activator) then return end
 
 	-- transfer ownership after a certain time has passed and the key was pressed down
 	if not self:GetAdversary() or activator ~= self:GetAdversary() then return end
 
+	-- set last activator to detect release of use key after he lost focus
+	self.last_activatotor = activator
+
 	if not self.t_transfer_start then
-		t_transfer_start = CurTime()
+		self.t_transfer_start = CurTime()
 	end
 
 	if CurTime() - self.t_transfer_start > GetGlobalInt('ttt_ankh_conversion_time') then
 		PHARAOH_HANDLER:TransferAnkhOwnership(self, activator)
-
-		-- set progress to be available for clients
-		self:SetNWInt('conversion_progress', (CurTime() - self.t_transfer_start) / GetGlobalInt('ttt_ankh_conversion_time') * 100)
+		self.t_transfer_start = nil
 	end
+
+	-- set progress to be available for clients
+	self:UpdateProgress()
 end
---]]
 
 -- called on key release
 function ENT:UseOverride(activator)
-	print(tostring(activator))
-	print(tostring(self:GetOwner()))
-
 	if not IsValid(activator) then return end
 
-
 	-- activator is owner --> pick up
-	if self:GetOwner() and activator == self:GetOwner() then
+	if self:GetOwner() and activator == self:GetOwner() and not self.last_activatotor then
 		-- picks up weapon, switches if possible and needed, returns weapon if successful
 		local wep = activator:PickupWeaponClass('weapon_ttt_ankh', true)
 
@@ -99,12 +123,16 @@ function ENT:UseOverride(activator)
 		end
 
 		PHARAOH_HANDLER:RemovedAnkh(self)
-		self:Remove()
-	end
 
-	-- key is released and transfer process should be stopped
-	if self:GetAdversary() and self:GetAdversary() == activator then
-		self.t_transfer_start = nil
+		activator.ankh_data = {
+			pharaoh = self:GetNWEntity('pharaoh', nil),
+			graverobber = self:GetNWEntity('graverobber', nil),
+			owner = self:GetOwner(),
+			adversary = self:GetNWEntity('adversary', nil),
+			health = self:Health()
+		}
+
+		self:Remove()
 	end
 end
 
@@ -136,6 +164,7 @@ end
 
 function ENT:SetAdversary(ply)
 	self.adversary = ply
+	self:SetNWEntity('adversary', ply)
 end
 
 function ENT:GetAdversary()
@@ -213,24 +242,28 @@ if CLIENT then
 		params.drawInfo = true
 		params.displayInfo.title.text = TryT('ttt2_weapon_ankh_name')
 
-		if client == data.ent:GetNWEntity('pharaoh', nil) then
+		params.displayInfo.desc[#params.displayInfo.desc + 1] = {
+			text = TryT('ankh_short_desc')
+		}
+
+		if client == data.ent:GetOwner() then
 			params.displayInfo.key = input.GetKeyCode(input.LookupBinding('+use'))
 
 			params.displayInfo.subtitle.text = TryT('target_pickup')
-		elseif client == data.ent:GetNWEntity('pharaoh', nil) then
+		elseif client == data.ent:GetNWEntity('adversary', nil) then
 			params.displayInfo.key = input.GetKeyCode(input.LookupBinding('+use'))
 
 			params.displayInfo.subtitle.text = TryT('ank_convert')
+
+			params.displayInfo.desc[#params.displayInfo.desc + 1] = {
+				text = ParT('ankh_progress', {progress = data.ent:GetNWInt('conversion_progress', 0)})
+			}
 		else
 			params.displayInfo.icon[#params.displayInfo.icon + 1] = {
 				material = PHARAOH.iconMaterial,
 				color = PHARAOH.bgcolor
 			}
 		end
-
-		params.displayInfo.desc[#params.displayInfo.desc + 1] = {
-			text = TryT('ankh_short_desc')
-		}
 
 		params.displayInfo.desc[#params.displayInfo.desc + 1] = {
 			text = ParT('ankh_health_points', {health = data.ent:Health(), maxhealth = GetGlobalInt('ttt_ankh_health')})

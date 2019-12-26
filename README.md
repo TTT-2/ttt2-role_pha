@@ -21,3 +21,4 @@
 - a map wide sound is played when the ankh was stolen
 - the ankh can be damaged and destroyed by every player
 - the ankhowner also sees a status icon displaying if he has an ankh
+- stealing the ankh leaves fingerprints on it
