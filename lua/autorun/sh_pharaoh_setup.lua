@@ -31,6 +31,9 @@ if CLIENT then
 		LANG.AddToLanguage('English', 'ankh_unknown_terrorist', 'This is the Ankh of an unknown terrorist')
 		LANG.AddToLanguage('Deutsch', 'ankh_unknown_terrorist', 'Dies ist der Ankh eines unbekannten Terroristen')
 
+		LANG.AddToLanguage('English', 'ankh_no_pickup', 'You can\'t pick up this Ankh')
+		LANG.AddToLanguage('Deutsch', 'ankh_no_pickup', 'Du kannst diesen Ankh nicht aufheben')
+
 		LANG.AddToLanguage('English', 'ankh_health_points', 'Health: {health} / {maxhealth}')
 		LANG.AddToLanguage('Deutsch', 'ankh_health_points', 'Leben: {health} / {maxhealth}')
 

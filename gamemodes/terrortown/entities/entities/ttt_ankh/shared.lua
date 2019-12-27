@@ -118,29 +118,37 @@ end
 function ENT:UseOverride(activator)
 	if not IsValid(activator) then return end
 
-	-- activator is owner --> pick up
-	if self:GetOwner() and activator == self:GetOwner() and not self.last_activatotor then
-		-- picks up weapon, switches if possible and needed, returns weapon if successful
-		local wep = activator:PickupWeaponClass('weapon_ttt_ankh', true)
+	-- make sure activator is owner
+	if not IsValid(self:GetOwner()) or activator ~= self:GetOwner() then return end
 
-		if not IsValid(wep) then
-			LANG.Msg(activator, 'ankh_no_room')
+	-- do not pick up if player was previously converting the ankh
+	if self.last_activatotor then return end
 
-			return
-		end
+	-- check if this roles is allowed to pick up
+	if activator == self:GetNWEntity('pharaoh', nil) and not GetGlobalBool('ttt_ankh_pharaoh_pickup', false) then return end
+	if activator == self:GetNWEntity('graverobber', nil) and not GetGlobalBool('ttt_ankh_graverobber_pickup', false) then return end
 
-		PHARAOH_HANDLER:RemovedAnkh(self)
+	-- picks up weapon, switches if possible and needed, returns weapon if successful
+	local wep = activator:PickupWeaponClass('weapon_ttt_ankh', true)
 
-		activator.ankh_data = {
-			pharaoh = self:GetNWEntity('pharaoh', nil),
-			graverobber = self:GetNWEntity('graverobber', nil),
-			owner = self:GetOwner(),
-			adversary = self:GetNWEntity('adversary', nil),
-			health = self:Health()
-		}
+	-- pickup failed because there was no room free in the inventory
+	if not IsValid(wep) then
+		LANG.Msg(activator, 'ankh_no_room')
 
-		self:Remove()
+		return
 	end
+
+	PHARAOH_HANDLER:RemovedAnkh(self)
+
+	activator.ankh_data = {
+		pharaoh = self:GetNWEntity('pharaoh', nil),
+		graverobber = self:GetNWEntity('graverobber', nil),
+		owner = self:GetOwner(),
+		adversary = self:GetNWEntity('adversary', nil),
+		health = self:Health()
+	}
+
+	self:Remove()
 end
 
 local zapsound = Sound('npc/assassin/ball_zap1.wav')
@@ -250,9 +258,20 @@ if CLIENT then
 		}
 
 		if client == data.ent:GetOwner() then
-			params.displayInfo.key = input.GetKeyCode(input.LookupBinding('+use'))
+			if client == data.ent:GetNWEntity('pharaoh', nil) and GetGlobalBool('ttt_ankh_pharaoh_pickup', false)
+			or client == data.ent:GetNWEntity('graverobber', nil) and GetGlobalBool('ttt_ankh_graverobber_pickup', false)
+			then
+				params.displayInfo.key = input.GetKeyCode(input.LookupBinding('+use'))
 
-			params.displayInfo.subtitle.text = LANG.TryTranslation('target_pickup')
+				params.displayInfo.subtitle.text = LANG.TryTranslation('target_pickup')
+			else
+				params.displayInfo.icon[#params.displayInfo.icon + 1] = {
+					material = PHARAOH.iconMaterial,
+					color = PHARAOH.ltcolor
+				}
+
+				params.displayInfo.subtitle.text = LANG.TryTranslation('ankh_no_pickup')
+			end
 		elseif client == data.ent:GetNWEntity('adversary', nil) then
 			params.displayInfo.key = input.GetKeyCode(input.LookupBinding('+use'))
 
@@ -265,7 +284,7 @@ if CLIENT then
 		else
 			params.displayInfo.icon[#params.displayInfo.icon + 1] = {
 				material = PHARAOH.iconMaterial,
-				color = PHARAOH.bgcolor
+				color = PHARAOH.ltcolor
 			}
 
 			params.displayInfo.subtitle.text = LANG.TryTranslation('ankh_unknown_terrorist')
