@@ -59,7 +59,7 @@ sound.Add({
 	name = 'ankh_conversion',
 	channel = CHAN_STATIC,
 	volume = 1.0,
-	level = 130,
+	level = 160,
 	sound = 'ankh/conversion.wav'
 })
 
@@ -67,7 +67,7 @@ sound.Add({
 	name = 'ankh_converting',
 	channel = CHAN_STATIC,
 	volume = 1.0,
-	level = 130,
+	level = 160,
 	sound = 'ankh/converting.wav'
 })
 
@@ -75,6 +75,6 @@ sound.Add({
 	name = 'ankh_respawn',
 	channel = CHAN_STATIC,
 	volume = 1.0,
-	level = 130,
+	level = 160,
 	sound = 'ankh/respawn.wav'
 })

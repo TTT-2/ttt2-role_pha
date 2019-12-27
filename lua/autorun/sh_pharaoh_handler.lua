@@ -1,7 +1,7 @@
 if SERVER then
 	util.AddNetworkString('ttt2_net_pharaoh_spawn_effects')
 	util.AddNetworkString('ttt2_net_pharaoh_wallack')
-	util.AddNetworkString('ttt2_net_pharaoh_play_sound')
+	util.AddNetworkString('ttt2_net_pharaoh_start_sound')
 	util.AddNetworkString('ttt2_net_pharaoh_show_popup')
 end
 
@@ -200,23 +200,21 @@ function PHARAOH_HANDLER:PlaySound(soundname, target, listeners)
 
 	if not IsValid(target) then return end
 
-	net.Start('ttt2_net_pharaoh_play_sound')
+	-- sending netmessages to the client since not every player should be able to hear it
+	net.Start('ttt2_net_pharaoh_start_sound')
 	net.WriteEntity(target)
 	net.WriteString(soundname)
-	net.WriteBool(true)
 	net.Send(listeners)
 end
 
-function PHARAOH_HANDLER:StopSound(soundname, target, listeners)
+function PHARAOH_HANDLER:StopSound(soundname, target)
 	if CLIENT then return end
 
 	if not IsValid(target) then return end
 
-	net.Start('ttt2_net_pharaoh_play_sound')
-	net.WriteEntity(target)
-	net.WriteString(soundname)
-	net.WriteBool(false)
-	net.Send(listeners)
+	-- the sound can be stopped on the server since it should stop
+	-- for all players
+	target:StopSound(soundname)
 end
 
 if CLIENT then
@@ -281,17 +279,13 @@ if CLIENT then
 		end
 	end)
 
-	net.Receive('ttt2_net_pharaoh_play_sound', function()
+	net.Receive('ttt2_net_pharaoh_start_sound', function()
 		local target = net.ReadEntity()
 		local soundname = net.ReadString()
 
 		if not IsValid(target) then return end
 
-		if net.ReadBool() then
-			target:EmitSound(soundname, 130)
-		else
-			target:StopSound(soundname)
-		end
+		target:EmitSound(soundname, 160)
 	end)
 
 	net.Receive('ttt2_net_pharaoh_show_popup', function()
