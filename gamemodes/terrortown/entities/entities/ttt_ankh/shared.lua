@@ -56,6 +56,9 @@ function ENT:Initialize()
 	-- start ankh handling
 	PHARAOH_HANDLER:PlacedAnkh(self, self:GetOwner())
 	self:GetOwner().ankh_data = nil
+
+	-- set up fingerprints
+	self.fingerprints = {}
 end
 
 function ENT:UpdateProgress()
@@ -81,6 +84,8 @@ if SERVER then
 
 			-- set progress to be available for clients
 			self:UpdateProgress()
+
+			PHARAOH_HANDLER:CancelConversion(self, self:GetOwner())
 		end
 	end
 end
@@ -96,6 +101,8 @@ function ENT:Use(activator, caller, type, value)
 
 	if not self.t_transfer_start then
 		self.t_transfer_start = CurTime()
+
+		PHARAOH_HANDLER:StartConversion(self, self:GetOwner())
 	end
 
 	if CurTime() - self.t_transfer_start > GetGlobalInt('ttt_ankh_conversion_time') then
@@ -139,7 +146,6 @@ end
 local zapsound = Sound('npc/assassin/ball_zap1.wav')
 
 function ENT:OnTakeDamage(dmginfo)
-	self:TakePhysicsDamage(dmginfo)
 	self:SetHealth(self:Health() - dmginfo:GetDamage())
 
 	if self:Health() > 0 then return end

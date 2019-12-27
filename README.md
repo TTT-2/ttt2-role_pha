@@ -22,3 +22,7 @@
 - the ankh can be damaged and destroyed by every player
 - the ankhowner also sees a status icon displaying if he has an ankh
 - stealing the ankh leaves fingerprints on it
+
+- ankh is not placeable when no Ts are alive
+- check if Ts is alive when selecting adversary
+- fix missing lng strings
