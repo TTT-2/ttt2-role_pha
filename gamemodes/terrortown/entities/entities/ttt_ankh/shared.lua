@@ -233,9 +233,6 @@ function ENT:WeldToGround(state)
 end
 
 if CLIENT then
-	local TryT = LANG.TryTranslation
-	local ParT = LANG.GetParamTranslation
-
 	-- handle looking at ankh
 	hook.Add('TTTRenderEntityInfo', 'HUDDrawTargetIDAnkh', function(data, params)
 		local client = LocalPlayer()
@@ -246,33 +243,37 @@ if CLIENT then
 		end
 
 		params.drawInfo = true
-		params.displayInfo.title.text = TryT('ttt2_weapon_ankh_name')
+		params.displayInfo.title.text = LANG.TryTranslation('ttt2_weapon_ankh_name')
 
 		params.displayInfo.desc[#params.displayInfo.desc + 1] = {
-			text = TryT('ankh_short_desc')
+			text = LANG.TryTranslation('ankh_short_desc')
 		}
 
 		if client == data.ent:GetOwner() then
 			params.displayInfo.key = input.GetKeyCode(input.LookupBinding('+use'))
 
-			params.displayInfo.subtitle.text = TryT('target_pickup')
+			params.displayInfo.subtitle.text = LANG.TryTranslation('target_pickup')
 		elseif client == data.ent:GetNWEntity('adversary', nil) then
 			params.displayInfo.key = input.GetKeyCode(input.LookupBinding('+use'))
 
-			params.displayInfo.subtitle.text = TryT('ank_convert')
+			params.displayInfo.subtitle.text = LANG.TryTranslation('ankh_convert')
 
 			params.displayInfo.desc[#params.displayInfo.desc + 1] = {
-				text = ParT('ankh_progress', {progress = data.ent:GetNWInt('conversion_progress', 0)})
+				text = LANG.GetParamTranslation('ankh_progress', {progress = data.ent:GetNWInt('conversion_progress', 0)}),
+				color = client:GetRoleColor()
 			}
 		else
 			params.displayInfo.icon[#params.displayInfo.icon + 1] = {
 				material = PHARAOH.iconMaterial,
 				color = PHARAOH.bgcolor
 			}
+
+			params.displayInfo.subtitle.text = LANG.TryTranslation('ankh_unknown_terrorist')
 		end
 
 		params.displayInfo.desc[#params.displayInfo.desc + 1] = {
-			text = ParT('ankh_health_points', {health = data.ent:Health(), maxhealth = GetGlobalInt('ttt_ankh_health')})
+			text = LANG.GetParamTranslation('ankh_health_points', {health = data.ent:Health(), maxhealth = GetGlobalInt('ttt_ankh_health')}),
+			color = data.ent:Health() > 50 and DETECTIVE.ltcolor or COLOR_ORANGE
 		}
 
 		params.drawOutline = true

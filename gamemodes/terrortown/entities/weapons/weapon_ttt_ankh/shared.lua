@@ -68,6 +68,12 @@ if SERVER then
 
 		if not IsValid(ply) or self.Planted then return end
 
+		if not PHARAOH_HANDLER:CanPlaceAnkh() then
+			LANG.Msg(ply, 'ankh_no_traitor_alive')
+
+			return
+		end
+
 		local ignore = {ply, self}
 		local spos = ply:GetShootPos()
 		local epos = spos + ply:GetAimVector() * 100

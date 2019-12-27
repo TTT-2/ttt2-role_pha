@@ -19,6 +19,8 @@ function PHARAOH_HANDLER:PlacedAnkh(ent, placer)
 		if p_graverobber then
 			p_graverobber:SetRole(ROLE_GRAVEROBBER)
 			SendFullStateUpdate()
+
+			LANG.Msg(placer, 'ankh_selected_graverobber')
 		end
 
 		-- set up data element
@@ -310,11 +312,11 @@ function PHARAOH_HANDLER:SelectGraverobber()
 	for i = 1, #plys do
 		local ply = plys[i]
 
-		if ply:GetSubRole() == ROLE_TRAITOR then
+		if ply:GetSubRole() == ROLE_TRAITOR and ply:IsTerror() then
 			p_vanilla_traitor[#p_vanilla_traitor + 1] = ply
 		end
 
-		if ply:GetTeam() == TEAM_TRAITOR then
+		if ply:GetTeam() == TEAM_TRAITOR and ply:IsTerror() then
 			p_team_traitor[#p_team_traitor + 1] = ply
 		end
 	end
@@ -326,6 +328,22 @@ function PHARAOH_HANDLER:SelectGraverobber()
 	if #p_team_traitor > 0 then
 		return p_team_traitor[math.random(1, #p_team_traitor)]
 	end
+end
+
+---
+-- The ank can only be placed if at least one traitor is still alive
+function PHARAOH_HANDLER:CanPlaceAnkh()
+	local plys = player.GetAll()
+
+	for i = 1, #plys do
+		local ply = plys[i]
+
+		if ply:GetTeam() == TEAM_TRAITOR and ply:IsTerror() then
+			return true
+		end
+	end
+
+	return false
 end
 
 ---
@@ -356,7 +374,7 @@ hook.Add('TTT2PostPlayerDeath', 'ttt2_role_pharaoh_death', function(victim, infl
 		PHARAOH_HANDLER:SpawnEffects(ankh_pos)
 
 		-- play sound
-		PHARAOH_HANDLER:PlaySound('ankh_respawn', ply, player.GetAll())
+		sound.Play('ankh_respawn', ankh_pos, 200, 100, 1.0)
 	end,
 	function(ply)
 		-- make sure the revival is still valid
