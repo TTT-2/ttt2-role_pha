@@ -49,6 +49,9 @@ if CLIENT then
 		LANG.AddToLanguage('English', 'ankh_no_traitor_alive', 'The Ankh can\'t be placed if no traitor is alive.')
 		LANG.AddToLanguage('Deutsch', 'ankh_no_traitor_alive', 'Der Ankh kann nich tplatziert werden, wenn kein Verräter am Leben ist.')
 
+		LANG.AddToLanguage('English', 'ankh_too_steep', 'This surface is to steep to place an Ankh.')
+		LANG.AddToLanguage('Deutsch', 'ankh_too_steep', 'Dieser Untergrund ist zu steil um einen Ankh zu platzieren.')
+
 		LANG.AddToLanguage('English', 'ankh_selected_graverobber', 'A traitor got converted to a graverobber. They are now your adversary!')
 		LANG.AddToLanguage('Deutsch', 'ankh_selected_graverobber', 'Ein Verräter wurde zu einem Grabräuber konvertiert. Er ist nun dein Gegenspieler!')
 

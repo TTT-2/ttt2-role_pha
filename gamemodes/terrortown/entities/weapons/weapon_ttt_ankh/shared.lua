@@ -35,7 +35,7 @@ SWEP.Secondary.Automatic = true
 SWEP.Secondary.Ammo = 'none'
 SWEP.Secondary.Delay = 1.0
 
-SWEP.Kind = WEAPON_EQUIP2
+SWEP.Kind = WEAPON_EXTRA
 SWEP.CanBuy = nil
 SWEP.LimitedStock = true -- only buyable once
 
@@ -92,7 +92,11 @@ if SERVER then
 		local len_a = tr.HitNormal:Length()
 		local angle = math.acos(dot_a_b / len_a)
 
-		if math.abs(angle) > 0.1 then return end
+		if math.abs(angle) > 0.2 then
+			LANG.Msg(self:GetAdversary(), 'ankh_too_steep')
+
+			return
+		end
 
 		local ankh = ents.Create('ttt_ankh')
 		if not IsValid(ankh) then return end

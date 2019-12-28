@@ -13,9 +13,9 @@ function ROLE:PreInitialize()
 	self.surviveBonus = 0
 	self.scoreKillsMultiplier = 1
 	self.scoreTeamKillsMultiplier = -16
-	self.preventFindCredits = true
-	self.preventKillCredits = true
-	self.preventTraitorAloneCredits = true
+	self.preventFindCredits = false
+	self.preventKillCredits = false
+	self.preventTraitorAloneCredits = false
 	self.notSelectable = true
 
 	self.defaultTeam = TEAM_TRAITOR
@@ -25,7 +25,7 @@ function ROLE:PreInitialize()
 		maximum = 1, -- maximum amount of roles in a round
 		minPlayers = 6, -- minimum amount of players until this role is able to get selected
 		credits = 0, -- the starting credits of a specific role
-		shopFallback = SHOP_DISABLED,
+		shopFallback = SHOP_TRAITOR,
 		togglable = true, -- option to toggle a role for a client if possible (F1 menu)
 		random = 50
 	}
