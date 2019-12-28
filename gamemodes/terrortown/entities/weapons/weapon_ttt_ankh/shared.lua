@@ -93,7 +93,7 @@ if SERVER then
 		local angle = math.acos(dot_a_b / len_a)
 
 		if math.abs(angle) > 0.2 then
-			LANG.Msg(self:GetAdversary(), 'ankh_too_steep')
+			LANG.Msg(ply, 'ankh_too_steep')
 
 			return
 		end
