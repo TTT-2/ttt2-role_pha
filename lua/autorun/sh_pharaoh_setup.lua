@@ -5,6 +5,10 @@ if SERVER then
 
 	resource.AddFile('materials/vgui/ttt/perks/hud_icon_ankh.png')
 	resource.AddFile('materials/vgui/ttt/perks/hud_icon_ankh_converting.png')
+
+	resource.AddFile('sound/ankh/conversion.wav')
+	resource.AddFile('sound/ankh/converting.wav')
+	resource.AddFile('sound/ankh/respawn.wav')
 end
 
 game.AddDecal('rune_graverobber', 'materials/ankh/runes/rune_graverobber')
