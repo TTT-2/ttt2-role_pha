@@ -5,11 +5,11 @@ if SERVER then
 
 	resource.AddFile('vgui/ttt/perks/hud_icon_ankh.png')
 	resource.AddFile('vgui/ttt/perks/hud_icon_ankh_converting.png')
-
-	game.AddDecal('rune_graverobber', 'ankh/runes/rune_graverobber')
-	game.AddDecal('rune_pharaoh', 'ankh/runes/rune_pharaoh')
-	game.AddDecal('rune_neutral', 'ankh/runes/rune_neutral')
 end
+
+game.AddDecal('rune_graverobber', 'ankh/runes/rune_graverobber')
+game.AddDecal('rune_pharaoh', 'ankh/runes/rune_pharaoh')
+game.AddDecal('rune_neutral', 'ankh/runes/rune_neutral')
 
 if CLIENT then
 	hook.Add('Initialize', 'ttt2_role_pharao_setup_lang', function()
