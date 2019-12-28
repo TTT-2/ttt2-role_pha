@@ -11,9 +11,11 @@ if SERVER then
 	resource.AddFile('sound/ankh/respawn.wav')
 end
 
-game.AddDecal('rune_graverobber', 'materials/ankh/runes/rune_graverobber')
-game.AddDecal('rune_pharaoh', 'materials/ankh/runes/rune_pharaoh')
-game.AddDecal('rune_neutral', 'materials/ankh/runes/rune_neutral')
+hook.Add('Initialize', 'ttt2_role_pharao_decal_registration', function()
+	game.AddDecal('rune_graverobber', 'materials/ankh/runes/rune_graverobber')
+	game.AddDecal('rune_pharaoh', 'materials/ankh/runes/rune_pharaoh')
+	game.AddDecal('rune_neutral', 'materials/ankh/runes/rune_neutral')
+end)
 
 if CLIENT then
 	hook.Add('Initialize', 'ttt2_role_pharao_setup_lang', function()
