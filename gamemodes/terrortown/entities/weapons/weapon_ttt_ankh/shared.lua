@@ -92,7 +92,7 @@ if SERVER then
 		local len_a = tr.HitNormal:Length()
 		local angle = math.acos(dot_a_b / len_a)
 
-		if angle ~= 0 then return end
+		if math.abs(angle) > 0.1 then return end
 
 		local ankh = ents.Create('ttt_ankh')
 		if not IsValid(ankh) then return end

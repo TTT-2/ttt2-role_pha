@@ -74,7 +74,7 @@ end
 
 function PHARAOH_HANDLER:CancelConversion(ent, ply)
 	-- stop converting sound for old owner
-	self:StopSound('ankh_converting', ent, {ent:GetOwner(), ent:GetAdversary()})
+	self:StopSound('ankh_converting', ent)
 
 	-- update status icon
 	STATUS:SetActiveIcon(ent:GetOwner(), 'ttt_ankh_status', 1)
@@ -86,7 +86,7 @@ function PHARAOH_HANDLER:TransferAnkhOwnership(ent, ply)
 	if not IsValid(ply) then return end
 
 	-- stop converting sound for old owner
-	self:StopSound('ankh_converting', ent, {ent:GetOwner(), ent:GetAdversary()})
+	self:StopSound('ankh_converting', ent)
 
 	-- play conversion sound for all players
 	self:PlaySound('ankh_conversion', ent, player.GetAll())
@@ -156,9 +156,9 @@ function PHARAOH_HANDLER:RemovedAnkh(ent)
 	STATUS:RemoveStatus(ent:GetOwner(), 'ttt_ankh_status')
 
 	-- stop all possible sounds
-	self:StopSound('ankh_converting', ent, player.GetAll())
-	self:StopSound('ankh_conversion', ent, player.GetAll())
-	self:StopSound('ankh_respawn', ent, player.GetAll())
+	self:StopSound('ankh_converting')
+	self:StopSound('ankh_conversion')
+	self:StopSound('ankh_respawn')
 
 	-- remove wallhack
 	self:RemoveWallhack(ent, ent:GetOwner())
