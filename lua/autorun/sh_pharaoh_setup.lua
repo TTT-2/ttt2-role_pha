@@ -22,7 +22,7 @@ if CLIENT then
 		LANG.AddToLanguage('English', 'weapon_ttt_ankh_help', 'Use {primaryfire} to place the ankh on the ground.')
 		LANG.AddToLanguage('Deutsch', 'weapon_ttt_ankh_help', 'Nutze {primaryfire}, um den Ankh auf dem Boden zu platzieren.')
 
-		LANG.AddToLanguage('English', 'ankh_short_desc', 'A mystic thing on the ground that allows specific players to respawn.')
+		LANG.AddToLanguage('English', 'ankh_short_desc', 'A mystical thing on the ground that allows specific players to respawn.')
 		LANG.AddToLanguage('Deutsch', 'ankh_short_desc', 'Ein mystisches Ding auf dem Boden, dass manchen Spielern erlaubt wiederbelebt zu werden.')
 
 		LANG.AddToLanguage('English', 'ankh_convert', 'Hold [key] to convert')
