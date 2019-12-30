@@ -24,3 +24,4 @@
 - stealing the ankh leaves fingerprints on it
 - ankh is not placeable when no Ts are alive
 - ankh can not be picked up by graverobbers
+- if the owner changes its team, he can still take benefit from the ankh, but can't pick it up anymore etc

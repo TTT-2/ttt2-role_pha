@@ -128,12 +128,15 @@ function ENT:UseOverride(activator)
 	if activator == self:GetNWEntity('pharaoh', nil) and not GetGlobalBool('ttt_ankh_pharaoh_pickup', false) then return end
 	if activator == self:GetNWEntity('graverobber', nil) and not GetGlobalBool('ttt_ankh_graverobber_pickup', false) then return end
 
+	-- make sure that the activator has one of the two allowed roles
+	if activator:GetSubRole() ~= ROLE_PHARAOH and activator:GetSubRole() ~= ROLE_GRAVEROBBER then return end
+
 	-- picks up weapon, switches if possible and needed, returns weapon if successful
 	local wep = activator:PickupWeaponClass('weapon_ttt_ankh', true)
 
 	-- pickup failed because there was no room free in the inventory
 	if not IsValid(wep) then
-		LANG.Msg(activator, 'ankh_no_room')
+		LANG.Msg(activator, 'pickup_no_room')
 
 		return
 	end
@@ -258,8 +261,9 @@ if CLIENT then
 		}
 
 		if client == data.ent:GetOwner() then
-			if client == data.ent:GetNWEntity('pharaoh', nil) and GetGlobalBool('ttt_ankh_pharaoh_pickup', false)
-			or client == data.ent:GetNWEntity('graverobber', nil) and GetGlobalBool('ttt_ankh_graverobber_pickup', false)
+			if (client == data.ent:GetNWEntity('pharaoh', nil) and GetGlobalBool('ttt_ankh_pharaoh_pickup', false)
+			or client == data.ent:GetNWEntity('graverobber', nil) and GetGlobalBool('ttt_ankh_graverobber_pickup', false))
+			and client:GetSubRole() == ROLE_PHARAOH or client:GetSubRole() == ROLE_GRAVEROBBER
 			then
 				params.displayInfo.key = input.GetKeyCode(input.LookupBinding('+use'))
 
