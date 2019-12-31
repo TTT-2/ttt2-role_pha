@@ -44,7 +44,7 @@ end
 function ENT:UpdateProgress()
 	local elapsed_time = self.t_transfer_start and (CurTime() - self.t_transfer_start) or 0
 
-	self:SetNWInt('conversion_progress', math.Round(elapsed_time / GetGlobalInt('ttt_ankh_conversion_time') * 100, 0))
+	self:SetNWInt('conversion_progress', math.Round(elapsed_time / GetGlobalInt('ttt_ankh_conversion_time', 0) * 100, 0))
 end
 
 if SERVER then
@@ -65,10 +65,10 @@ if SERVER then
 		if not IsValid(ply) then return end
 
 		-- heal ent
-		if not self.t_heal_ent or CurTime() > self.t_heal_ent then
+		if GetGlobalBool('ttt_ankh_heal_ankh', false) and not self.t_heal_ent or CurTime() > self.t_heal_ent then
 			self:SetHealth(math.min(self:GetMaxHealth(), self:Health() + 1))
 
-			if self:Health() <= 40 then
+			if self:Health() <= GetGlobalInt('ttt_ankh_low_health', 0) then
 				self.t_heal_ent = CurTime() + 0.1
 			else
 				self.t_heal_ent = CurTime() + 0.5
@@ -76,7 +76,8 @@ if SERVER then
 		end
 
 		-- heal player
-		if self:Health() > 40 and not self.t_heal_ply or CurTime() > self.t_heal_ply then
+		if GetGlobalBool('ttt_ankh_heal_player', false) and self:Health() > GetGlobalInt('ttt_ankh_low_health', 0)
+		and not self.t_heal_ply or CurTime() > self.t_heal_ply then
 			ply:SetHealth(math.min(ply:GetMaxHealth(), ply:Health() + 1))
 
 			self.t_heal_ply = CurTime() + 1.5
@@ -122,7 +123,7 @@ function ENT:Use(activator, caller, type, value)
 		PHARAOH_HANDLER:StartConversion(self, self:GetOwner())
 	end
 
-	if CurTime() - self.t_transfer_start > GetGlobalInt('ttt_ankh_conversion_time') then
+	if CurTime() - self.t_transfer_start > GetGlobalInt('ttt_ankh_conversion_time', 0) then
 		PHARAOH_HANDLER:TransferAnkhOwnership(self, activator)
 		self.t_transfer_start = nil
 	end
@@ -269,7 +270,7 @@ if CLIENT then
 		end
 
 		-- if the ankhs HP is low, let the light flicker
-		if self:Health() <= 40 and CurTime() > self.light_next_state then
+		if self:Health() <= GetGlobalInt('ttt_ankh_low_health', 0) and CurTime() > self.light_next_state then
 			self.light_next_state = CurTime() + math.Rand(0, 0.5)
 
 			if self.light_state > 2 then
@@ -310,14 +311,16 @@ if CLIENT then
 		if not color then return end
 
 		-- calculate the brightness, if the owner is in close range, it should light up brighter
-		local brightness = 3
+		local brightness = 2
 
-		local plys = player.GetAll()
-		for i = 1, #plys do
-			if plys[i] == self:GetOwner() and self:GetPos():Distance(plys[i]:GetPos()) < 100 then
-				brightness = 6
+		if GetGlobalBool('ttt_ankh_light_up', false) then
+			local plys = player.GetAll()
+			for i = 1, #plys do
+				if plys[i] == self:GetOwner() and self:GetPos():Distance(plys[i]:GetPos()) < 100 then
+					brightness = 4
 
-				break
+					break
+				end
 			end
 		end
 
