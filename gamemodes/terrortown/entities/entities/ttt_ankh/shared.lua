@@ -7,26 +7,6 @@ ENT.Model = Model('models/props_lab/reciever01b.mdl')
 ENT.CanHavePrints = true
 ENT.CanUseKey = true
 
-
---TODO
-function ENT:LightUp(color)
-	if SERVER then return end
-
-	local dlight = DynamicLight(self:EntIndex())
-
-	dlight.r = color.r
-	dlight.g = color.g
-	dlight.b = color.b
-
-	dlight.brightness = 5
-	dlight.Decay = 1000
-	dlight.Size = 256
-	dlight.DieTime = CurTime() + 1
-	dlight.Pos = self:GetPos() + Vector(0,0,10)
-end
-
-------------------------
-
 function ENT:Initialize()
 	self:SetModel(self.Model)
 
@@ -68,7 +48,44 @@ function ENT:UpdateProgress()
 end
 
 if SERVER then
+	function ENT:HandleCloseRange()
+		if not IsValid(self:GetOwner()) then return end
+
+		local plys = player.GetAll()
+		local ply
+
+		for i = 1, #plys do
+			if plys[i] == self:GetOwner() and self:GetPos():Distance(plys[i]:GetPos()) < 100 then
+				ply = plys[i]
+
+				break
+			end
+		end
+
+		if not IsValid(ply) then return end
+
+		-- heal ent
+		if not self.t_heal_ent or CurTime() > self.t_heal_ent then
+			self:SetHealth(math.min(self:GetMaxHealth(), self:Health() + 1))
+
+			if self:Health() <= 40 then
+				self.t_heal_ent = CurTime() + 0.1
+			else
+				self.t_heal_ent = CurTime() + 0.5
+			end
+		end
+
+		-- heal player
+		if self:Health() > 40 and not self.t_heal_ply or CurTime() > self.t_heal_ply then
+			ply:SetHealth(math.min(ply:GetMaxHealth(), ply:Health() + 1))
+
+			self.t_heal_ply = CurTime() + 1.5
+		end
+	end
+
 	function ENT:Think()
+		self:HandleCloseRange()
+
 		if not IsValid(self.last_activatotor) then return end
 
 		local tr = util.TraceLine({
@@ -244,6 +261,69 @@ function ENT:WeldToGround(state)
 end
 
 if CLIENT then
+	function ENT:LightUp(color, brightness)
+		-- make sure initial values are set
+		if not self.light_next_state then
+			self.light_next_state = CurTime()
+			self.light_state = brightness
+		end
+
+		-- if the ankhs HP is low, let the light flicker
+		if self:Health() <= 40 and CurTime() > self.light_next_state then
+			self.light_next_state = CurTime() + math.Rand(0, 0.5)
+
+			if self.light_state > 2 then
+				self.light_state = brightness * 0.25
+			else
+				self.light_state = brightness
+			end
+		else
+			self.light_state = brightness
+		end
+
+		local dlight = DynamicLight(self:EntIndex())
+
+		dlight.r = color.r
+		dlight.g = color.g
+		dlight.b = color.b
+
+		dlight.brightness = self.light_state
+		dlight.Decay = 1000
+		dlight.Size = 200
+		dlight.DieTime = CurTime() + 0.1
+		dlight.Pos = self:GetPos() + Vector(0, 0, 35)
+	end
+
+	function ENT:Think()
+		if not IsValid(self:GetOwner()) then return end
+
+		-- get the color the ent should light up
+		local color
+
+		if self:GetNWEntity('pharaoh', nil) == self:GetOwner() then
+			color = PHARAOH.color
+		elseif self:GetNWEntity('pharaoh', nil) == self:GetOwner() then
+			color = GRAVEROBBER.color
+		end
+
+		-- if the ent has no owner, it shouldn't light up
+		if not color then return end
+
+		-- calculate the brightness, if the owner is in close range, it should light up brighter
+		local brightness = 3
+
+		local plys = player.GetAll()
+		for i = 1, #plys do
+			if plys[i] == self:GetOwner() and self:GetPos():Distance(plys[i]:GetPos()) < 100 then
+				brightness = 6
+
+				break
+			end
+		end
+
+		self:LightUp(color, brightness)
+	end
+
 	-- handle looking at ankh
 	hook.Add('TTTRenderEntityInfo', 'HUDDrawTargetIDAnkh', function(data, params)
 		local client = LocalPlayer()

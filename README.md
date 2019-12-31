@@ -13,7 +13,11 @@
 
 ## The Ankh
 
-- there is a mystical drawing around the ankh that damages everyone but the pharao and the graverobber; the current owner of the ankh even gets a small regen effect
+- there is a mystical drawing around the ankh
+- close range to the ankh the current owner gets slow health regen if the Ankh health is over 40
+- the ankh gets automatically healed when the owner is nearby, the healing effect is really fast as long as the ankh HP os below 40
+- the ankh lights up if the owner is in close range
+- the light starts to flicker if the HP of the ankh is lower than 40
 - Once the owner of the ankh dies, he respawns at his ankh with half of his HP after a 10 second cooldown, smoke is spawned and the ankh is removed
 - the ankh can be stolen by holding „USE“ while looking at it
 - the owner has a wallhack for the ankh to always see its position
