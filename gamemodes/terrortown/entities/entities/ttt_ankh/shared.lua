@@ -65,7 +65,7 @@ if SERVER then
 		if not IsValid(ply) then return end
 
 		-- heal ent
-		if GetGlobalBool('ttt_ankh_heal_ankh', false) and not self.t_heal_ent or CurTime() > self.t_heal_ent then
+		if GetGlobalBool('ttt_ankh_heal_ankh', false) and (not self.t_heal_ent or CurTime() > self.t_heal_ent) then
 			self:SetHealth(math.min(self:GetMaxHealth(), self:Health() + 1))
 
 			if self:Health() <= GetGlobalInt('ttt_ankh_low_health', 0) then
@@ -76,8 +76,8 @@ if SERVER then
 		end
 
 		-- heal player
-		if GetGlobalBool('ttt_ankh_heal_player', false) and self:Health() > GetGlobalInt('ttt_ankh_low_health', 0)
-		and not self.t_heal_ply or CurTime() > self.t_heal_ply then
+		if GetGlobalBool('ttt_ankh_heal_owner', false) and self:Health() > GetGlobalInt('ttt_ankh_low_health', 0)
+		and (not self.t_heal_ply or CurTime() > self.t_heal_ply) then
 			ply:SetHealth(math.min(ply:GetMaxHealth(), ply:Health() + 1))
 
 			self.t_heal_ply = CurTime() + 1.5
