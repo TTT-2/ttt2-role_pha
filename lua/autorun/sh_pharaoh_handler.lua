@@ -378,7 +378,7 @@ hook.Add('TTT2PostPlayerDeath', 'ttt2_role_pharaoh_death', function(victim, infl
 	end,
 	function(ply)
 		-- make sure the revival is still valid
-		return GetRoundState() == ROUND_ACTIVE and IsValid(ply) and ply.ankh and ply == ply.ankh:GetOwner()
+		return GetRoundState() == ROUND_ACTIVE and IsValid(ply) and not ply:Alive() and ply.ankh and ply == ply.ankh:GetOwner()
 	end,
 	false, -- no corpse needed for respawn
 	true, -- force revival
