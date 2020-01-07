@@ -294,7 +294,14 @@ if CLIENT then
 		local id = net.ReadString()
 
 		if id == 'conversion_success' then
-			EPOP:AddMessage(LANG.GetTranslation('ankh_popup_converted_title'), LANG.GetTranslation('ankh_popup_converted_text'), 6)
+			EPOP:AddMessage(
+				{
+					text = LANG.GetTranslation('ankh_popup_converted_title'),
+					color = PHARAOH.ltcolor
+				},
+				LANG.GetTranslation('ankh_popup_converted_text'),
+				6
+			)
 		end
 	end)
 end
