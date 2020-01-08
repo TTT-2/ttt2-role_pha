@@ -27,6 +27,7 @@ function ROLE:PreInitialize()
 		credits = 0, -- the starting credits of a specific role
 		shopFallback = SHOP_TRAITOR,
 		togglable = true, -- option to toggle a role for a client if possible (F1 menu)
+		traitorButton = 1, -- can use traitor buttons
 		random = 50
 	}
 end
