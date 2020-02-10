@@ -328,61 +328,61 @@ if CLIENT then
 	end
 
 	-- handle looking at ankh
-	hook.Add('TTTRenderEntityInfo', 'HUDDrawTargetIDAnkh', function(data, params)
+	hook.Add('TTTRenderEntityInfo', 'HUDDrawTargetIDAnkh', function(tData)
 		local client = LocalPlayer()
+		local ent = tData:GetEntity()
+
+		if not PHARAOH then return end
 
 		if not IsValid(client) or not client:IsTerror() or not client:Alive()
-		or data.distance > 100 or data.ent:GetClass() ~= 'ttt_ankh' then
+		or tData:GetEntityDistance() > 100 or not IsValid(ent) or ent:GetClass() ~= 'ttt_ankh' then
 			return
 		end
 
-		params.drawInfo = true
-		params.displayInfo.title.text = LANG.TryTranslation('ttt2_weapon_ankh_name')
+		-- enable targetID rendering
+		tData:EnableText()
+		tData:EnableOutline()
+		tData:SetOutlineColor(client:GetRoleColor())
 
-		params.displayInfo.desc[#params.displayInfo.desc + 1] = {
-			text = LANG.TryTranslation('ankh_short_desc')
-		}
+		tData:SetTitle(LANG.TryTranslation('ttt2_weapon_ankh_name'))
+		tData:AddDescriptionLine(LANG.TryTranslation('ankh_short_desc'))
 
-		if client == data.ent:GetOwner() then
-			if (client == data.ent:GetNWEntity('pharaoh', nil) and GetGlobalBool('ttt_ankh_pharaoh_pickup', false)
-			or client == data.ent:GetNWEntity('graverobber', nil) and GetGlobalBool('ttt_ankh_graverobber_pickup', false))
-			and client:GetSubRole() == ROLE_PHARAOH or client:GetSubRole() == ROLE_GRAVEROBBER
+		if client == ent:GetOwner() then
+			if (client == ent:GetNWEntity('pharaoh', nil) and GetGlobalBool('ttt_ankh_pharaoh_pickup', false)
+				or client == ent:GetNWEntity('graverobber', nil) and GetGlobalBool('ttt_ankh_graverobber_pickup', false))
+				and client:GetSubRole() == ROLE_PHARAOH or client:GetSubRole() == ROLE_GRAVEROBBER
 			then
-				params.displayInfo.key = input.GetKeyCode(input.LookupBinding('+use'))
+				tData:SetKeyBinding('+use')
 
-				params.displayInfo.subtitle.text = LANG.TryTranslation('target_pickup')
+				tData:SetSubTitle(LANG.TryTranslation('target_pickup'))
 			else
-				params.displayInfo.icon[#params.displayInfo.icon + 1] = {
-					material = PHARAOH.iconMaterial,
-					color = PHARAOH.ltcolor
-				}
+				tData:AddIcon(
+					PHARAOH.iconMaterial,
+					PHARAOH.ltcolor
+				)
 
-				params.displayInfo.subtitle.text = LANG.TryTranslation('ankh_no_pickup')
+				tData:SetSubTitle(LANG.TryTranslation('ankh_no_pickup'))
 			end
-		elseif client == data.ent:GetNWEntity('adversary', nil) then
-			params.displayInfo.key = input.GetKeyCode(input.LookupBinding('+use'))
+		elseif client == ent:GetNWEntity('adversary', nil) then
+			tData:SetKeyBinding('+use')
+			tData:SetSubTitle(LANG.TryTranslation('ankh_convert'))
 
-			params.displayInfo.subtitle.text = LANG.TryTranslation('ankh_convert')
-
-			params.displayInfo.desc[#params.displayInfo.desc + 1] = {
-				text = LANG.GetParamTranslation('ankh_progress', {progress = data.ent:GetNWInt('conversion_progress', 0)}),
-				color = client:GetRoleColor()
-			}
+			tData:AddDescriptionLine(
+				LANG.GetParamTranslation('ankh_progress', {progress = ent:GetNWInt('conversion_progress', 0)}),
+				client:GetRoleColor()
+			)
 		else
-			params.displayInfo.icon[#params.displayInfo.icon + 1] = {
-				material = PHARAOH.iconMaterial,
-				color = PHARAOH.ltcolor
-			}
+			tData:AddIcon(
+				PHARAOH.iconMaterial,
+				PHARAOH.ltcolor
+			)
 
-			params.displayInfo.subtitle.text = LANG.TryTranslation('ankh_unknown_terrorist')
+			tData:SetSubTitle(LANG.TryTranslation('ankh_unknown_terrorist'))
 		end
 
-		params.displayInfo.desc[#params.displayInfo.desc + 1] = {
-			text = LANG.GetParamTranslation('ankh_health_points', {health = data.ent:Health(), maxhealth = GetGlobalInt('ttt_ankh_health')}),
-			color = data.ent:Health() > 50 and DETECTIVE.ltcolor or COLOR_ORANGE
-		}
-
-		params.drawOutline = true
-		params.outlineColor = client:GetRoleColor()
+		tData:AddDescriptionLine(
+			LANG.GetParamTranslation('ankh_health_points', {health = ent:Health(), maxhealth = GetGlobalInt('ttt_ankh_health')}),
+			ent:Health() > GetGlobalInt('ttt_ankh_low_health', 0) and DETECTIVE.ltcolor or COLOR_ORANGE
+		)
 	end)
 end
