@@ -354,18 +354,18 @@ if CLIENT then
 			then
 				tData:SetKeyBinding('+use')
 
-				tData:SetSubTitle(LANG.TryTranslation('target_pickup'))
+				tData:SetSubtitle(LANG.TryTranslation('target_pickup'))
 			else
 				tData:AddIcon(
 					PHARAOH.iconMaterial,
 					PHARAOH.ltcolor
 				)
 
-				tData:SetSubTitle(LANG.TryTranslation('ankh_no_pickup'))
+				tData:SetSubtitle(LANG.TryTranslation('ankh_no_pickup'))
 			end
 		elseif client == ent:GetNWEntity('adversary', nil) then
 			tData:SetKeyBinding('+use')
-			tData:SetSubTitle(LANG.TryTranslation('ankh_convert'))
+			tData:SetSubtitle(LANG.TryTranslation('ankh_convert'))
 
 			tData:AddDescriptionLine(
 				LANG.GetParamTranslation('ankh_progress', {progress = ent:GetNWInt('conversion_progress', 0)}),
@@ -377,7 +377,7 @@ if CLIENT then
 				PHARAOH.ltcolor
 			)
 
-			tData:SetSubTitle(LANG.TryTranslation('ankh_unknown_terrorist'))
+			tData:SetSubtitle(LANG.TryTranslation('ankh_unknown_terrorist'))
 		end
 
 		tData:AddDescriptionLine(
