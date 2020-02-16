@@ -1,15 +1,15 @@
 if SERVER then
 	AddCSLuaFile()
 
-	resource.AddFile('materials/vgui/ttt/dynamic/roles/icon_grav.vmt')
+	resource.AddFile("materials/vgui/ttt/dynamic/roles/icon_grav.vmt")
 end
 
-ROLE.Base = 'ttt_role_base'
+ROLE.Base = "ttt_role_base"
 
 function ROLE:PreInitialize()
 	self.color = Color(200, 100, 60, 255)
 
-	self.abbr = 'grav'
+	self.abbr = "grav"
 	self.surviveBonus = 0
 	self.scoreKillsMultiplier = 1
 	self.scoreTeamKillsMultiplier = -16
@@ -30,27 +30,4 @@ function ROLE:PreInitialize()
 		traitorButton = 1, -- can use traitor buttons
 		random = 50
 	}
-end
-
-function ROLE:Initialize()
-	if CLIENT then
-		-- Role specific language elements
-		LANG.AddToLanguage('English', GRAVEROBBER.name, 'Graverobber')
-		LANG.AddToLanguage('English', 'info_popup_' .. GRAVEROBBER.name,
-			[[You are the Graverobber!
-			Search for the placed Ankh and try to use it for your benefit!]])
-		LANG.AddToLanguage('English', 'body_found_' .. GRAVEROBBER.abbr, 'They were a Graverobber.')
-		LANG.AddToLanguage('English', 'search_role_' .. GRAVEROBBER.abbr, 'This person was a Graverobber!')
-		LANG.AddToLanguage('English', 'target_' .. GRAVEROBBER.name, 'Graverobber')
-		LANG.AddToLanguage('English', 'ttt2_desc_' .. GRAVEROBBER.name, [[The Graverobber is a player in the traitor team that is the adversary of the pharao.]])
-
-		LANG.AddToLanguage('Deutsch', GRAVEROBBER.name, 'Grabräuber')
-		LANG.AddToLanguage('Deutsch', 'info_popup_' .. GRAVEROBBER.name,
-			[[Du bist ein Grabräuber!
-			Suche nah dem platzierten Ankh und nutze ihn zu deinem Vorteil]])
-		LANG.AddToLanguage('Deutsch', 'body_found_' .. GRAVEROBBER.abbr, 'Er war ein Grabräuber ...')
-		LANG.AddToLanguage('Deutsch', 'search_role_' .. GRAVEROBBER.abbr, 'Diese Person war ein Grabräuber')
-		LANG.AddToLanguage('Deutsch', 'target_' .. GRAVEROBBER.name, 'Grabräuber')
-		LANG.AddToLanguage('Deutsch', 'ttt2_desc_' .. GRAVEROBBER.name, [[Der Grabräuber is ein Verräter und ein direkter Gegenspieler des Pharaos!]])
-	end
 end

@@ -1,7 +1,7 @@
 if SERVER then
 	AddCSLuaFile()
 else -- CLIENT
-	SWEP.PrintName = 'ttt2_weapon_ankh_name'
+	SWEP.PrintName = "ttt2_weapon_ankh_name"
 	SWEP.Slot = 7
 
 	SWEP.ViewModelFOV = 10
@@ -9,30 +9,30 @@ else -- CLIENT
 	SWEP.DrawCrosshair = false
 
 	SWEP.EquipMenuData = {
-		type = 'item_weapon',
-		desc = 'ttt2_weapon_ankh_desc'
+		type = "item_weapon",
+		desc = "ttt2_weapon_ankh_desc"
 	}
 
-	SWEP.Icon = 'vgui/ttt/icon_ankh'
+	SWEP.Icon = "vgui/ttt/icon_ankh"
 end
 
-SWEP.Base = 'weapon_tttbase'
+SWEP.Base = "weapon_tttbase"
 
-SWEP.HoldType = 'normal'
+SWEP.HoldType = "normal"
 
-SWEP.ViewModel = 'models/weapons/v_crowbar.mdl'
-SWEP.WorldModel = 'models/props_lab/reciever01b.mdl'
+SWEP.ViewModel = "models/weapons/v_crowbar.mdl"
+SWEP.WorldModel = "models/props_lab/reciever01b.mdl"
 
 SWEP.Primary.ClipSize = -1
 SWEP.Primary.DefaultClip = -1
 SWEP.Primary.Automatic = true
-SWEP.Primary.Ammo = 'none'
+SWEP.Primary.Ammo = "none"
 SWEP.Primary.Delay = 1.0
 
 SWEP.Secondary.ClipSize = -1
 SWEP.Secondary.DefaultClip = -1
 SWEP.Secondary.Automatic = true
-SWEP.Secondary.Ammo = 'none'
+SWEP.Secondary.Ammo = "none"
 SWEP.Secondary.Delay = 1.0
 
 SWEP.Kind = WEAPON_EXTRA
@@ -69,7 +69,7 @@ if SERVER then
 		if not IsValid(ply) or self.Planted then return end
 
 		if not PHARAOH_HANDLER:CanPlaceAnkh() then
-			LANG.Msg(ply, 'ankh_no_traitor_alive')
+			LANG.Msg(ply, "ankh_no_traitor_alive")
 
 			return
 		end
@@ -93,12 +93,12 @@ if SERVER then
 		local angle = math.acos(dot_a_b / len_a)
 
 		if math.abs(angle) > 0.2 then
-			LANG.Msg(ply, 'ankh_too_steep')
+			LANG.Msg(ply, "ankh_too_steep")
 
 			return
 		end
 
-		local ankh = ents.Create('ttt_ankh')
+		local ankh = ents.Create("ttt_ankh")
 		if not IsValid(ankh) then return end
 
 		ankh:PointAtEntity(ply)
@@ -143,11 +143,11 @@ if CLIENT then
 	function SWEP:OnRemove()
 		if not IsValid(self:GetOwner()) or self:GetOwner() ~= LocalPlayer() or not self:GetOwner():Alive() then return end
 
-		RunConsoleCommand('lastinv')
+		RunConsoleCommand("lastinv")
 	end
 
 	function SWEP:Initialize()
-		self:AddHUDHelp('weapon_ttt_ankh_help', nil, true)
+		self:AddHUDHelp("weapon_ttt_ankh_help", nil, true)
 
 		return self.BaseClass.Initialize(self)
 	end

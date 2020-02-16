@@ -2,8 +2,8 @@ if SERVER then
 	AddCSLuaFile()
 end
 
-ENT.Type = 'anim'
-ENT.Model = Model('models/props_lab/reciever01b.mdl')
+ENT.Type = "anim"
+ENT.Model = Model("models/props_lab/reciever01b.mdl")
 ENT.CanHavePrints = true
 ENT.CanUseKey = true
 
@@ -17,14 +17,14 @@ function ENT:Initialize()
 	self:WeldToGround(true)
 
 	if SERVER then
-		self:SetMaxHealth(GetGlobalInt('ttt_ankh_health'))
+		self:SetMaxHealth(GetGlobalInt("ttt_ankh_health"))
 
 		self:SetUseType(CONTINUOUS_USE)
 	end
 
 	-- can pick this up if we own it
 	if SERVER then
-		local weptbl = util.WeaponForClass('weapon_ttt_ankh')
+		local weptbl = util.WeaponForClass("weapon_ttt_ankh")
 
 		if weptbl and weptbl.Kind then
 			self.WeaponKind = weptbl.Kind
@@ -44,7 +44,7 @@ end
 function ENT:UpdateProgress()
 	local elapsed_time = self.t_transfer_start and (CurTime() - self.t_transfer_start) or 0
 
-	self:SetNWInt('conversion_progress', math.Round(elapsed_time / GetGlobalInt('ttt_ankh_conversion_time', 0) * 100, 0))
+	self:SetNWInt("conversion_progress", math.Round(elapsed_time / GetGlobalInt("ttt_ankh_conversion_time", 0) * 100, 0))
 end
 
 if SERVER then
@@ -65,10 +65,10 @@ if SERVER then
 		if not IsValid(ply) then return end
 
 		-- heal ent
-		if GetGlobalBool('ttt_ankh_heal_ankh', false) and (not self.t_heal_ent or CurTime() > self.t_heal_ent) then
+		if GetGlobalBool("ttt_ankh_heal_ankh", false) and (not self.t_heal_ent or CurTime() > self.t_heal_ent) then
 			self:SetHealth(math.min(self:GetMaxHealth(), self:Health() + 1))
 
-			if self:Health() <= GetGlobalInt('ttt_ankh_low_health', 0) then
+			if self:Health() <= GetGlobalInt("ttt_ankh_low_health", 0) then
 				self.t_heal_ent = CurTime() + 0.1
 			else
 				self.t_heal_ent = CurTime() + 0.5
@@ -76,7 +76,7 @@ if SERVER then
 		end
 
 		-- heal player
-		if GetGlobalBool('ttt_ankh_heal_owner', false) and self:Health() > GetGlobalInt('ttt_ankh_low_health', 0)
+		if GetGlobalBool("ttt_ankh_heal_owner", false) and self:Health() > GetGlobalInt("ttt_ankh_low_health", 0)
 		and (not self.t_heal_ply or CurTime() > self.t_heal_ply) then
 			ply:SetHealth(math.min(ply:GetMaxHealth(), ply:Health() + 1))
 
@@ -123,7 +123,7 @@ function ENT:Use(activator, caller, type, value)
 		PHARAOH_HANDLER:StartConversion(self, self:GetOwner())
 	end
 
-	if CurTime() - self.t_transfer_start > GetGlobalInt('ttt_ankh_conversion_time', 0) then
+	if CurTime() - self.t_transfer_start > GetGlobalInt("ttt_ankh_conversion_time", 0) then
 		PHARAOH_HANDLER:TransferAnkhOwnership(self, activator)
 		self.t_transfer_start = nil
 	end
@@ -143,18 +143,18 @@ function ENT:UseOverride(activator)
 	if self.last_activatotor then return end
 
 	-- check if this roles is allowed to pick up
-	if activator == self:GetNWEntity('pharaoh', nil) and not GetGlobalBool('ttt_ankh_pharaoh_pickup', false) then return end
-	if activator == self:GetNWEntity('graverobber', nil) and not GetGlobalBool('ttt_ankh_graverobber_pickup', false) then return end
+	if activator == self:GetNWEntity("pharaoh", nil) and not GetGlobalBool("ttt_ankh_pharaoh_pickup", false) then return end
+	if activator == self:GetNWEntity("graverobber", nil) and not GetGlobalBool("ttt_ankh_graverobber_pickup", false) then return end
 
 	-- make sure that the activator has one of the two allowed roles
 	if activator:GetSubRole() ~= ROLE_PHARAOH and activator:GetSubRole() ~= ROLE_GRAVEROBBER then return end
 
 	-- picks up weapon, switches if possible and needed, returns weapon if successful
-	local wep = activator:PickupWeaponClass('weapon_ttt_ankh', true)
+	local wep = activator:PickupWeaponClass("weapon_ttt_ankh", true)
 
 	-- pickup failed because there was no room free in the inventory
 	if not IsValid(wep) then
-		LANG.Msg(activator, 'pickup_no_room')
+		LANG.Msg(activator, "pickup_no_room")
 
 		return
 	end
@@ -162,17 +162,17 @@ function ENT:UseOverride(activator)
 	PHARAOH_HANDLER:RemovedAnkh(self)
 
 	activator.ankh_data = {
-		pharaoh = self:GetNWEntity('pharaoh', nil),
-		graverobber = self:GetNWEntity('graverobber', nil),
+		pharaoh = self:GetNWEntity("pharaoh", nil),
+		graverobber = self:GetNWEntity("graverobber", nil),
 		owner = self:GetOwner(),
-		adversary = self:GetNWEntity('adversary', nil),
+		adversary = self:GetNWEntity("adversary", nil),
 		health = self:Health()
 	}
 
 	self:Remove()
 end
 
-local zapsound = Sound('npc/assassin/ball_zap1.wav')
+local zapsound = Sound("npc/assassin/ball_zap1.wav")
 
 function ENT:OnTakeDamage(dmginfo)
 	self:SetHealth(self:Health() - dmginfo:GetDamage())
@@ -183,23 +183,23 @@ function ENT:OnTakeDamage(dmginfo)
 
 	local effect = EffectData()
 	effect:SetOrigin(self:GetPos())
-	util.Effect('cball_explode', effect)
+	util.Effect("cball_explode", effect)
 
 	sound.Play(zapsound, self:GetPos())
 
 	-- notify the current owner and his adversary that the ankh was broken
 	if IsValid(self:GetOwner()) then
-		LANG.Msg(self:GetOwner(), 'ankh_broken')
+		LANG.Msg(self:GetOwner(), "ankh_broken")
 	end
 
 	if IsValid(self:GetAdversary()) then
-		LANG.Msg(self:GetAdversary(), 'ankh_broken_adv')
+		LANG.Msg(self:GetAdversary(), "ankh_broken_adv")
 	end
 end
 
 function ENT:SetAdversary(ply)
 	self.adversary = ply
-	self:SetNWEntity('adversary', ply)
+	self:SetNWEntity("adversary", ply)
 end
 
 function ENT:GetAdversary()
@@ -250,7 +250,7 @@ function ENT:WeldToGround(state)
 			-- Worst case, we are still uncarryable
 		end
 	else
-		constraint.RemoveConstraints(self, 'Weld')
+		constraint.RemoveConstraints(self, "Weld")
 
 		local phys = self:GetPhysicsObject()
 
@@ -270,7 +270,7 @@ if CLIENT then
 		end
 
 		-- if the ankhs HP is low, let the light flicker
-		if self:Health() <= GetGlobalInt('ttt_ankh_low_health', 0) and CurTime() > self.light_next_state then
+		if self:Health() <= GetGlobalInt("ttt_ankh_low_health", 0) and CurTime() > self.light_next_state then
 			self.light_next_state = CurTime() + math.Rand(0, 0.5)
 
 			if self.light_state > 2 then
@@ -301,9 +301,9 @@ if CLIENT then
 		-- get the color the ent should light up
 		local color
 
-		if self:GetNWEntity('pharaoh', nil) == self:GetOwner() then
+		if self:GetNWEntity("pharaoh", nil) == self:GetOwner() then
 			color = PHARAOH.color
-		elseif self:GetNWEntity('pharaoh', nil) == self:GetOwner() then
+		elseif self:GetNWEntity("pharaoh", nil) == self:GetOwner() then
 			color = GRAVEROBBER.color
 		end
 
@@ -313,7 +313,7 @@ if CLIENT then
 		-- calculate the brightness, if the owner is in close range, it should light up brighter
 		local brightness = 2
 
-		if GetGlobalBool('ttt_ankh_light_up', false) then
+		if GetGlobalBool("ttt_ankh_light_up", false) then
 			local plys = player.GetAll()
 			for i = 1, #plys do
 				if plys[i] == self:GetOwner() and self:GetPos():Distance(plys[i]:GetPos()) < 100 then
@@ -328,14 +328,14 @@ if CLIENT then
 	end
 
 	-- handle looking at ankh
-	hook.Add('TTTRenderEntityInfo', 'HUDDrawTargetIDAnkh', function(tData)
+	hook.Add("TTTRenderEntityInfo", "HUDDrawTargetIDAnkh", function(tData)
 		local client = LocalPlayer()
 		local ent = tData:GetEntity()
 
 		if not PHARAOH then return end
 
 		if not IsValid(client) or not client:IsTerror() or not client:Alive()
-		or tData:GetEntityDistance() > 100 or not IsValid(ent) or ent:GetClass() ~= 'ttt_ankh' then
+		or tData:GetEntityDistance() > 100 or not IsValid(ent) or ent:GetClass() ~= "ttt_ankh" then
 			return
 		end
 
@@ -344,31 +344,31 @@ if CLIENT then
 		tData:EnableOutline()
 		tData:SetOutlineColor(client:GetRoleColor())
 
-		tData:SetTitle(LANG.TryTranslation('ttt2_weapon_ankh_name'))
-		tData:AddDescriptionLine(LANG.TryTranslation('ankh_short_desc'))
+		tData:SetTitle(LANG.TryTranslation("ttt2_weapon_ankh_name"))
+		tData:AddDescriptionLine(LANG.TryTranslation("ankh_short_desc"))
 
 		if client == ent:GetOwner() then
-			if (client == ent:GetNWEntity('pharaoh', nil) and GetGlobalBool('ttt_ankh_pharaoh_pickup', false)
-				or client == ent:GetNWEntity('graverobber', nil) and GetGlobalBool('ttt_ankh_graverobber_pickup', false))
+			if (client == ent:GetNWEntity("pharaoh", nil) and GetGlobalBool("ttt_ankh_pharaoh_pickup", false)
+				or client == ent:GetNWEntity("graverobber", nil) and GetGlobalBool("ttt_ankh_graverobber_pickup", false))
 				and client:GetSubRole() == ROLE_PHARAOH or client:GetSubRole() == ROLE_GRAVEROBBER
 			then
-				tData:SetKeyBinding('+use')
+				tData:SetKeyBinding("+use")
 
-				tData:SetSubtitle(LANG.TryTranslation('target_pickup'))
+				tData:SetSubtitle(LANG.TryTranslation("target_pickup"))
 			else
 				tData:AddIcon(
 					PHARAOH.iconMaterial,
 					PHARAOH.ltcolor
 				)
 
-				tData:SetSubtitle(LANG.TryTranslation('ankh_no_pickup'))
+				tData:SetSubtitle(LANG.TryTranslation("ankh_no_pickup"))
 			end
-		elseif client == ent:GetNWEntity('adversary', nil) then
-			tData:SetKeyBinding('+use')
-			tData:SetSubtitle(LANG.TryTranslation('ankh_convert'))
+		elseif client == ent:GetNWEntity("adversary", nil) then
+			tData:SetKeyBinding("+use")
+			tData:SetSubtitle(LANG.GetParamTranslation("ankh_convert", {usekey = Key("+use", "USE")}))
 
 			tData:AddDescriptionLine(
-				LANG.GetParamTranslation('ankh_progress', {progress = ent:GetNWInt('conversion_progress', 0)}),
+				LANG.GetParamTranslation("ankh_progress", {progress = ent:GetNWInt("conversion_progress", 0)}),
 				client:GetRoleColor()
 			)
 		else
@@ -377,12 +377,12 @@ if CLIENT then
 				PHARAOH.ltcolor
 			)
 
-			tData:SetSubtitle(LANG.TryTranslation('ankh_unknown_terrorist'))
+			tData:SetSubtitle(LANG.TryTranslation("ankh_unknown_terrorist"))
 		end
 
 		tData:AddDescriptionLine(
-			LANG.GetParamTranslation('ankh_health_points', {health = ent:Health(), maxhealth = GetGlobalInt('ttt_ankh_health')}),
-			ent:Health() > GetGlobalInt('ttt_ankh_low_health', 0) and DETECTIVE.ltcolor or COLOR_ORANGE
+			LANG.GetParamTranslation("ankh_health_points", {health = ent:Health(), maxhealth = GetGlobalInt("ttt_ankh_health")}),
+			ent:Health() > GetGlobalInt("ttt_ankh_low_health", 0) and DETECTIVE.ltcolor or COLOR_ORANGE
 		)
 	end)
 end

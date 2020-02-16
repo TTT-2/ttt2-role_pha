@@ -1,8 +1,8 @@
 if SERVER then
-	util.AddNetworkString('ttt2_net_pharaoh_spawn_effects')
-	util.AddNetworkString('ttt2_net_pharaoh_wallack')
-	util.AddNetworkString('ttt2_net_pharaoh_start_sound')
-	util.AddNetworkString('ttt2_net_pharaoh_show_popup')
+	util.AddNetworkString("ttt2_net_pharaoh_spawn_effects")
+	util.AddNetworkString("ttt2_net_pharaoh_wallack")
+	util.AddNetworkString("ttt2_net_pharaoh_start_sound")
+	util.AddNetworkString("ttt2_net_pharaoh_show_popup")
 end
 
 PHARAOH_HANDLER = {}
@@ -20,7 +20,7 @@ function PHARAOH_HANDLER:PlacedAnkh(ent, placer)
 			p_graverobber:SetRole(ROLE_GRAVEROBBER)
 			SendFullStateUpdate()
 
-			LANG.Msg(placer, 'ankh_selected_graverobber')
+			LANG.Msg(placer, "ankh_selected_graverobber")
 		end
 
 		-- set up data element
@@ -29,7 +29,7 @@ function PHARAOH_HANDLER:PlacedAnkh(ent, placer)
 			graverobber = p_graverobber,
 			owner = placer,
 			adversary = p_graverobber,
-			health = GetGlobalInt('ttt_ankh_health')
+			health = GetGlobalInt("ttt_ankh_health")
 		}
 	end
 
@@ -38,9 +38,9 @@ function PHARAOH_HANDLER:PlacedAnkh(ent, placer)
 
 	-- drawing the decal on the ground
 	if placer:GetSubRole() == ROLE_PHARAOH then
-		self:AddDecal(ent, 'rune_pharaoh')
+		self:AddDecal(ent, "rune_pharaoh")
 	else
-		self:AddDecal(ent, 'rune_graverobber')
+		self:AddDecal(ent, "rune_graverobber")
 	end
 
 	-- store ankh information to the players as well
@@ -50,8 +50,8 @@ function PHARAOH_HANDLER:PlacedAnkh(ent, placer)
 	end
 
 	-- setting the graverobber and pharao to this specific ankh
-	ent:SetNWEntity('pharaoh', placer.ankh_data.pharaoh)
-	ent:SetNWEntity('graverobber', placer.ankh_data.graverobber)
+	ent:SetNWEntity("pharaoh", placer.ankh_data.pharaoh)
+	ent:SetNWEntity("graverobber", placer.ankh_data.graverobber)
 
 	-- set new owner of ankh
 	ent:SetOwner(placer.ankh_data.owner)
@@ -61,23 +61,23 @@ function PHARAOH_HANDLER:PlacedAnkh(ent, placer)
 	self:AddWallhack(ent, placer)
 
 	-- add status icon to owner
-	STATUS:AddStatus(ent:GetOwner(), 'ttt_ankh_status', 1)
+	STATUS:AddStatus(ent:GetOwner(), "ttt_ankh_status", 1)
 end
 
 function PHARAOH_HANDLER:StartConversion(ent, ply)
 	-- start converting sound for old owner
-	self:PlaySound('ankh_converting', ent, {ent:GetOwner(), ent:GetAdversary()})
+	self:PlaySound("ankh_converting", ent, {ent:GetOwner(), ent:GetAdversary()})
 
 	-- update status icon
-	STATUS:SetActiveIcon(ent:GetOwner(), 'ttt_ankh_status', 2)
+	STATUS:SetActiveIcon(ent:GetOwner(), "ttt_ankh_status", 2)
 end
 
 function PHARAOH_HANDLER:CancelConversion(ent, ply)
 	-- stop converting sound for old owner
-	self:StopSound('ankh_converting', ent)
+	self:StopSound("ankh_converting", ent)
 
 	-- update status icon
-	STATUS:SetActiveIcon(ent:GetOwner(), 'ttt_ankh_status', 1)
+	STATUS:SetActiveIcon(ent:GetOwner(), "ttt_ankh_status", 1)
 end
 
 function PHARAOH_HANDLER:TransferAnkhOwnership(ent, ply)
@@ -86,17 +86,17 @@ function PHARAOH_HANDLER:TransferAnkhOwnership(ent, ply)
 	if not IsValid(ply) then return end
 
 	-- stop converting sound for old owner
-	self:StopSound('ankh_converting', ent)
+	self:StopSound("ankh_converting", ent)
 
 	-- play conversion sound for all players
-	self:PlaySound('ankh_conversion', ent, player.GetAll())
+	self:PlaySound("ankh_conversion", ent, player.GetAll())
 
 	-- show conversion popup to old owner
-	self:ShowPopup(ent:GetOwner(), 'conversion_success')
+	self:ShowPopup(ent:GetOwner(), "conversion_success")
 
 	-- update status icons for both players
-	STATUS:RemoveStatus(ent:GetOwner(), 'ttt_ankh_status')
-	STATUS:AddStatus(ent:GetAdversary(), 'ttt_ankh_status', 1)
+	STATUS:RemoveStatus(ent:GetOwner(), "ttt_ankh_status")
+	STATUS:AddStatus(ent:GetAdversary(), "ttt_ankh_status", 1)
 
 	-- add fingerprints to the ent
 	if not table.HasValue(ent.fingerprints, ent:GetAdversary()) then
@@ -110,12 +110,12 @@ function PHARAOH_HANDLER:TransferAnkhOwnership(ent, ply)
 	-- removing the decal on the ground since it will be replaced
 	self:RemoveDecal(ent)
 
-	if ply == ent:GetNWEntity('pharaoh') then
-		self:AddDecal(ent, 'rune_pharaoh')
+	if ply == ent:GetNWEntity("pharaoh") then
+		self:AddDecal(ent, "rune_pharaoh")
 	end
 
-	if ply == ent:GetNWEntity('graverobber') then
-		self:AddDecal(ent, 'rune_graverobber')
+	if ply == ent:GetNWEntity("graverobber") then
+		self:AddDecal(ent, "rune_graverobber")
 	end
 
 	-- update wallhacks
@@ -124,14 +124,14 @@ function PHARAOH_HANDLER:TransferAnkhOwnership(ent, ply)
 end
 
 function PHARAOH_HANDLER:AddWallhack(ent, ply)
-	net.Start('ttt2_net_pharaoh_wallack')
+	net.Start("ttt2_net_pharaoh_wallack")
 	net.WriteBool(true)
 	net.WriteEntity(ent)
 	net.Send(ply)
 end
 
 function PHARAOH_HANDLER:RemoveWallhack(ent, ply)
-	net.Start('ttt2_net_pharaoh_wallack')
+	net.Start("ttt2_net_pharaoh_wallack")
 	net.WriteBool(false)
 	net.WriteEntity(ent)
 	net.Send(ply)
@@ -141,7 +141,7 @@ function PHARAOH_HANDLER:DestroyAnkh(ent, ply)
 	if CLIENT then return end
 
 	self:RemovedAnkh(ent)
-	self:AddDecal(ent, 'rune_neutral')
+	self:AddDecal(ent, "rune_neutral")
 
 	ent:Remove()
 end
@@ -153,12 +153,12 @@ function PHARAOH_HANDLER:RemovedAnkh(ent)
 	self:RemoveDecal(ent)
 
 	-- remove status icon
-	STATUS:RemoveStatus(ent:GetOwner(), 'ttt_ankh_status')
+	STATUS:RemoveStatus(ent:GetOwner(), "ttt_ankh_status")
 
 	-- stop all possible sounds
-	self:StopSound('ankh_converting')
-	self:StopSound('ankh_conversion')
-	self:StopSound('ankh_respawn')
+	self:StopSound("ankh_converting")
+	self:StopSound("ankh_conversion")
+	self:StopSound("ankh_respawn")
 
 	-- remove wallhack
 	self:RemoveWallhack(ent, ent:GetOwner())
@@ -170,7 +170,7 @@ function PHARAOH_HANDLER:AddDecal(ent, type)
 	table.Add(filter, player.GetAll())
 
 	-- store the decal id on this ent for easier removal
-	ent.decal_id = 'ankh_decal_' .. tostring(ent:EntIndex())
+	ent.decal_id = "ankh_decal_" .. tostring(ent:EntIndex())
 
 	util.PaintDownRemovable(ent.decal_id, ent:GetPos() + Vector(0, 0, 20), type, filter)
 end
@@ -186,13 +186,13 @@ end
 function PHARAOH_HANDLER:SpawnEffects(pos)
 	if CLIENT then return end
 
-	net.Start('ttt2_net_pharaoh_spawn_effects')
+	net.Start("ttt2_net_pharaoh_spawn_effects")
 	net.WriteVector(pos)
 	net.Broadcast()
 end
 
 function PHARAOH_HANDLER:ShowPopup(ply, id)
-	net.Start('ttt2_net_pharaoh_show_popup')
+	net.Start("ttt2_net_pharaoh_show_popup")
 	net.WriteString(id)
 	net.Send(ply)
 end
@@ -203,7 +203,7 @@ function PHARAOH_HANDLER:PlaySound(soundname, target, listeners)
 	if not IsValid(target) then return end
 
 	-- sending netmessages to the client since not every player should be able to hear it
-	net.Start('ttt2_net_pharaoh_start_sound')
+	net.Start("ttt2_net_pharaoh_start_sound")
 	net.WriteEntity(target)
 	net.WriteString(soundname)
 	net.Send(listeners)
@@ -220,20 +220,20 @@ function PHARAOH_HANDLER:StopSound(soundname, target)
 end
 
 if CLIENT then
-	local zapsound = Sound('npc/assassin/ball_zap1.wav')
+	local zapsound = Sound("npc/assassin/ball_zap1.wav")
 
 	local smokeparticles = {
-		Model('particle/particle_smokegrenade'),
-		Model('particle/particle_noisesphere')
+		Model("particle/particle_smokegrenade"),
+		Model("particle/particle_noisesphere")
 	}
 
-	net.Receive('ttt2_net_pharaoh_spawn_effects', function()
+	net.Receive("ttt2_net_pharaoh_spawn_effects", function()
 		local pos = net.ReadVector()
 
 		-- spawn sound effect and destroy particless
 		local effect = EffectData()
 		effect:SetOrigin(pos)
-		util.Effect('cball_explode', effect)
+		util.Effect("cball_explode", effect)
 
 		sound.Play(zapsound, pos)
 
@@ -273,7 +273,7 @@ if CLIENT then
 		em:Finish()
 	end)
 
-	net.Receive('ttt2_net_pharaoh_wallack', function()
+	net.Receive("ttt2_net_pharaoh_wallack", function()
 		if net.ReadBool() then
 			marks.Add({net.ReadEntity()}, LocalPlayer():GetRoleColor())
 		else
@@ -281,7 +281,7 @@ if CLIENT then
 		end
 	end)
 
-	net.Receive('ttt2_net_pharaoh_start_sound', function()
+	net.Receive("ttt2_net_pharaoh_start_sound", function()
 		local target = net.ReadEntity()
 		local soundname = net.ReadString()
 
@@ -290,16 +290,16 @@ if CLIENT then
 		target:EmitSound(soundname, 160)
 	end)
 
-	net.Receive('ttt2_net_pharaoh_show_popup', function()
+	net.Receive("ttt2_net_pharaoh_show_popup", function()
 		local id = net.ReadString()
 
-		if id == 'conversion_success' then
+		if id == "conversion_success" then
 			EPOP:AddMessage(
 				{
-					text = LANG.GetTranslation('ankh_popup_converted_title'),
+					text = LANG.GetTranslation("ankh_popup_converted_title"),
 					color = PHARAOH.ltcolor
 				},
-				LANG.GetTranslation('ankh_popup_converted_text'),
+				LANG.GetTranslation("ankh_popup_converted_text"),
 				6
 			)
 		end
@@ -356,7 +356,7 @@ end
 ---
 -- using TTT2PostPlayerDeath hook here, since it is called at the very last, addons like
 -- a second change are triggered prior to this hook (SERVER ONLY)
-hook.Add('TTT2PostPlayerDeath', 'ttt2_role_pharaoh_death', function(victim, inflictor, attacker)
+hook.Add("TTT2PostPlayerDeath", "ttt2_role_pharaoh_death", function(victim, inflictor, attacker)
 	if GetRoundState() ~= ROUND_ACTIVE then return end
 
 	-- victim must be either a pharaoh or graverobber with an ankh
@@ -381,7 +381,7 @@ hook.Add('TTT2PostPlayerDeath', 'ttt2_role_pharaoh_death', function(victim, infl
 		PHARAOH_HANDLER:SpawnEffects(ankh_pos)
 
 		-- play sound
-		sound.Play('ankh_respawn', ankh_pos, 200, 100, 1.0)
+		sound.Play("ankh_respawn", ankh_pos, 200, 100, 1.0)
 	end,
 	function(ply)
 		-- make sure the revival is still valid
@@ -394,7 +394,7 @@ hook.Add('TTT2PostPlayerDeath', 'ttt2_role_pharaoh_death', function(victim, infl
 	end)
 end)
 
-hook.Add('TTTBeginRound', 'ttt2_role_pharaoh_reset', function()
+hook.Add("TTTBeginRound", "ttt2_role_pharaoh_reset", function()
 	for _, p in pairs(player.GetAll()) do
 		p.ankh_data = nil
 	end
