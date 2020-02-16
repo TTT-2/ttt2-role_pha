@@ -1,7 +1,7 @@
 if SERVER then
-	resource.AddFile('materials/ankh/runes/rune_graverobber')
-	resource.AddFile('materials/ankh/runes/rune_pharaoh')
-	resource.AddFile('materials/ankh/runes/rune_neutral')
+	resource.AddFile('materials/ankh/runes/rune_graverobber.vmt')
+	resource.AddFile('materials/ankh/runes/rune_pharaoh.vmt')
+	resource.AddFile('materials/ankh/runes/rune_neutral.vmt')
 
 	resource.AddFile('materials/vgui/ttt/perks/hud_icon_ankh.png')
 	resource.AddFile('materials/vgui/ttt/perks/hud_icon_ankh_converting.png')
