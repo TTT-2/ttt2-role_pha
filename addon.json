@@ -1,0 +1,11 @@
+{
+	"title"		:	"[TTT2] Pharaoh & Graverobber [ROLE]",
+	"type"		:	"ServerContent",
+    "tags"		:	[ "roleplay", "fun" ],
+    "ignore"    : [
+        ".git/*",
+        ".gitignore",
+        "README.md",
+		"ttt2-role_pha.jpg"
+    ]
+}
