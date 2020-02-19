@@ -356,7 +356,7 @@ if CLIENT then
 			then
 				tData:SetKeyBinding("+use")
 
-				tData:SetSubtitle(LANG.GetParamTranslation("target_pickup"), {usekey = Key("+use", "USE")})
+				tData:SetSubtitle(LANG.GetParamTranslation("target_pickup", {usekey = Key("+use", "USE")}))
 			else
 				tData:AddIcon(
 					PHARAOH.iconMaterial,
