@@ -337,7 +337,7 @@ if CLIENT then
 		if not PHARAOH then return end
 
 		if not IsValid(client) or not client:IsTerror() or not client:Alive()
-		or tData:GetEntityDistance() > 100 or not IsValid(ent) or ent:GetClass() ~= "ttt_ankh" then
+		or tData:GetEntityDistance() > 80 or not IsValid(ent) or ent:GetClass() ~= "ttt_ankh" then
 			return
 		end
 
