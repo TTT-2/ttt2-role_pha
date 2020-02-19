@@ -1,0 +1,5 @@
+"VertexLitGeneric"
+{
+	"$basetexture" "pharaohs_ankh/pharaohs_ankh/pharaohs_ankh"
+	"$surfaceprop" "concrete" // Surfaceprop list found here: https://developer.valvesoftware.com/wiki/Surfaceprop
+}

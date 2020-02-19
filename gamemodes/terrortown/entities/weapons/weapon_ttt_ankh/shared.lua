@@ -114,7 +114,8 @@ if SERVER then
 
 		local ang = tr_ent.HitNormal:Angle()
 
-		ankh:SetPos(tr_ent.HitPos + ang:Forward() * 2.5)
+		-- shift ankh model since center is a bit offset
+		ankh:SetPos(tr_ent.HitPos + Vector(-6, -1, 3.5))
 		ankh:SetAngles(ang)
 		ankh:SetOwner(ply)
 		ankh:Spawn()

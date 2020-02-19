@@ -3,12 +3,14 @@ if SERVER then
 end
 
 ENT.Type = "anim"
-ENT.Model = Model("models/props_lab/reciever01b.mdl")
+ENT.Model = Model("models/pharaohs_ankh/pharaohs_ankh/pharaohs_ankh.mdl")
 ENT.CanHavePrints = true
 ENT.CanUseKey = true
 
 function ENT:Initialize()
 	self:SetModel(self.Model)
+	self:SetModelScale(0.15)
+	self:SetAngles(Angle(1, 0, 0))
 
 	self:PhysicsInit(SOLID_VPHYSICS)
 	self:SetSolid(SOLID_VPHYSICS)
@@ -354,7 +356,7 @@ if CLIENT then
 			then
 				tData:SetKeyBinding("+use")
 
-				tData:SetSubtitle(LANG.TryTranslation("target_pickup"))
+				tData:SetSubtitle(LANG.GetParamTranslation("target_pickup"), {usekey = Key("+use", "USE")})
 			else
 				tData:AddIcon(
 					PHARAOH.iconMaterial,

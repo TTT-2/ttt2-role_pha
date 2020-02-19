@@ -172,7 +172,8 @@ function PHARAOH_HANDLER:AddDecal(ent, type)
 	-- store the decal id on this ent for easier removal
 	ent.decal_id = "ankh_decal_" .. tostring(ent:EntIndex())
 
-	util.PaintDownRemovable(ent.decal_id, ent:GetPos() + Vector(0, 0, 20), type, filter)
+	-- shift decal to offset shift of model
+	util.PaintDownRemovable(ent.decal_id, ent:GetPos() + Vector(7, 1, 20), type, filter)
 end
 
 function PHARAOH_HANDLER:RemoveDecal(ent)
