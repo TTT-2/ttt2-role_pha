@@ -12,7 +12,6 @@ if SERVER then
 	resource.AddFile("sound/ankh/converting.wav")
 	resource.AddFile("sound/ankh/respawn.wav")
 
-	resource.AddFile("anims/pharaohs_ankh_idle.smd")
 	resource.AddFile("models/pharaohs_ankh/pharaohs_ankh/pharaohs_ankh.dx80.vtx")
 	resource.AddFile("models/pharaohs_ankh/pharaohs_ankh/pharaohs_ankh.dx90.ctx")
 	resource.AddFile("models/pharaohs_ankh/pharaohs_ankh/pharaohs_ankh.mdl")
