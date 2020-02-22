@@ -6,7 +6,7 @@ if SERVER then
 	resource.AddFile("materials/vgui/ttt/perks/hud_icon_ankh.png")
 	resource.AddFile("materials/vgui/ttt/perks/hud_icon_ankh_converting.png")
 
-	resource.AddFile("materials/pharaohs_ankh/pharaohs_ankh.vmt")
+	resource.AddFile("materials/pharaohs_ankh/pharaohs_ankh/pharaohs_ankh.vmt")
 
 	resource.AddFile("sound/ankh/conversion.wav")
 	resource.AddFile("sound/ankh/converting.wav")
