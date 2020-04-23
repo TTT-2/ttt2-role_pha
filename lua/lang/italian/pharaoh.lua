@@ -9,13 +9,13 @@ L["search_role_" .. PHARAOH.abbr] = "Questa persona era un Faraone!"
 L["target_" .. PHARAOH.name] = "Faraone"
 L["ttt2_desc_" .. PHARAOH.name] = [[Il Faraone è un innocente che usa un oggetto speciale a suo vantaggio!]]
 
-L[GRAVEROBBER.name] = "Profanatore"
-L["info_popup_" .. GRAVEROBBER.name] = [[Sei il Profanatore!
+L[GRAVEROBBER.name] = "Graverobber"
+L["info_popup_" .. GRAVEROBBER.name] = [[Sei il Graverobber!
 Cerca un'Ankh piazzata e prova ad usarla a tuo vantaggio!]]
-L["body_found_" .. GRAVEROBBER.abbr] = "Era un Profanatore."
-L["search_role_" .. GRAVEROBBER.abbr] = "Questa persona era un Profanatore!"
-L["target_" .. GRAVEROBBER.name] = "Profanatore"
-L["ttt2_desc_" .. GRAVEROBBER.name] = [[Il Profanatore è un giocatore che fa parte dei traditori che è l'avversario del Faraone.]]
+L["body_found_" .. GRAVEROBBER.abbr] = "Era un Graverobber."
+L["search_role_" .. GRAVEROBBER.abbr] = "Questa persona era un Graverobber!"
+L["target_" .. GRAVEROBBER.name] = "Graverobber"
+L["ttt2_desc_" .. GRAVEROBBER.name] = [[Il Graverobber è un giocatore che fa parte dei traditori e che è l'avversario del Faraone.]]
 
 -- OTHER ROLE LANGUAGE STRINGS
 L["ttt2_weapon_ankh_name"] = "Ankh"
@@ -31,6 +31,6 @@ L["ankh_broken"] = "La tua Ankh è stata distrutta."
 L["ankh_broken_adv"] = "La tua Ankh è stata distrutta."
 L["ankh_no_traitor_alive"] = "L'Ankh non può essere posizionata se nessun traditore è vivo."
 L["ankh_too_steep"] = "Questa superficie è troppo ripida per piazzare un'Ankh."
-L["ankh_selected_graverobber"] = "Un traditore è stato convertito a profanatore. Ora è un tuo avversario!"
+L["ankh_selected_graverobber"] = "Un traditore è stato convertito a Graverobber. Ora è un tuo avversario!"
 L["ankh_popup_converted_title"] = "La tua Ankh è stata convertita!"
 L["ankh_popup_converted_text"] = "Il tuo avversario ha avuto abbastanza tempo per convertire la tua ankh ed usarlo per i suoi scopi. Tornaci ed assicurati che torni tua!"
