@@ -4,7 +4,7 @@ L = LANG.GetLanguageTableReference("italiano")
 L[PHARAOH.name] = "Faraone"
 L["info_popup_" .. PHARAOH.name] = [[Sei il Faraone!
 Usa la tua Ankh a tuo vantaggio. Piazzala in una posizione strategica e assicurati che sia protetta!]]
-L["body_found_" .. PHARAOH.abbr] = "Era un Farone."
+L["body_found_" .. PHARAOH.abbr] = "Era un Faraone."
 L["search_role_" .. PHARAOH.abbr] = "Questa persona era un Faraone!"
 L["target_" .. PHARAOH.name] = "Faraone"
 L["ttt2_desc_" .. PHARAOH.name] = [[Il Faraone è un innocente che usa un oggetto speciale a suo vantaggio!]]
