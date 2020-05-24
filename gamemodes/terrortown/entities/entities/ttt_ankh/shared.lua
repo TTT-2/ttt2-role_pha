@@ -120,7 +120,9 @@ function ENT:Use(activator, caller, type, value)
 	-- set last activator to detect release of use key after he lost focus
 	self.last_activator = activator
 
-	if not self.t_transfer_start and not self:GetNWBool("isReviving", false) then
+	if self:GetNWBool("isReviving", false) then return end
+
+	if not self.t_transfer_start then
 		self.t_transfer_start = CurTime()
 
 		PHARAOH_HANDLER:StartConversion(self, self:GetOwner())
@@ -306,7 +308,7 @@ if CLIENT then
 
 		if self:GetNWEntity("pharaoh", nil) == self:GetOwner() then
 			color = PHARAOH.color
-		elseif self:GetNWEntity("pharaoh", nil) == self:GetOwner() then
+		elseif self:GetNWEntity("graverobber", nil) == self:GetOwner() then
 			color = GRAVEROBBER.color
 		end
 
@@ -370,10 +372,17 @@ if CLIENT then
 			tData:SetKeyBinding("+use")
 			tData:SetSubtitle(LANG.GetParamTranslation("ankh_convert", {usekey = Key("+use", "USE")}))
 
-			tData:AddDescriptionLine(
-				LANG.GetParamTranslation("ankh_progress", {progress = ent:GetNWInt("conversion_progress", 0)}),
-				client:GetRoleColor()
-			)
+			if ent:GetNWBool("isReviving", false) then
+				tData:AddDescriptionLine(
+					LANG.TryTranslation("ankh_owner_is_reviving"),
+					COLOR_ORANGE
+				)
+			else
+				tData:AddDescriptionLine(
+					LANG.GetParamTranslation("ankh_progress", {progress = ent:GetNWInt("conversion_progress", 0)}),
+					client:GetRoleColor()
+				)
+			end
 		else
 			tData:AddIcon(
 				PHARAOH.iconMaterial,

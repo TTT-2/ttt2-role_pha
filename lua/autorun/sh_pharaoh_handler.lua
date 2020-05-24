@@ -142,9 +142,11 @@ function PHARAOH_HANDLER:DestroyAnkh(ent, ply)
 
 	-- if a player is respawning with the use of the ankh, the popup
 	-- has to be replaced
-	if ent:GetNWBool("isReviving", false) then
-		PHARAOH_HANDLER:RemovePopup(ply, "pharaohRevival")
-		PHARAOH_HANDLER:ShowPopup(ply, "pharaohRevivalCanceled")
+	if ent:GetNWBool("isReviving", false) and IsValid(ent.revivingPlayer) then
+		PHARAOH_HANDLER:RemovePopup(ent.revivingPlayer, "pharaohRevival")
+		PHARAOH_HANDLER:ShowPopup(ent.revivingPlayer, "pharaohRevivalCanceled")
+
+		ent.revivingPlayer:CancelRevival()
 	end
 
 	self:RemovedAnkh(ent)
@@ -414,6 +416,7 @@ hook.Add("TTT2PostPlayerDeath", "ttt2_role_pharaoh_death", function(victim, infl
 
 	-- set state to ank that a player is reviving
 	victim.ankh:SetNWBool("isReviving", true)
+	victim.ankh.revivingPlayer = victim
 
 	local ankh_pos = victim.ankh:GetPos() + Vector(0, 0, 2.5)
 
@@ -421,6 +424,7 @@ hook.Add("TTT2PostPlayerDeath", "ttt2_role_pharaoh_death", function(victim, infl
 		function(ply)
 			-- set state to ank that a player is no longer reviving
 			ply.ankh:SetNWBool("isReviving", false)
+			ply.ankh.revivingPlayer = nil
 
 			-- destroying the ankh on revival
 			PHARAOH_HANDLER:DestroyAnkh(ply.ankh, ply)

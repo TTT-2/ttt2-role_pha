@@ -39,3 +39,4 @@ L["ankh_popup_converted_text"] = "Il tuo avversario ha avuto abbastanza tempo pe
 --L["ankh_revival_canceled"] = "Revival Canceled"
 --L["ankh_revival_canceled_text"] = "Your revival was canceled because your ankh has been destroyed."
 --L["ankh_insufficient_room"] = "Insufficient room."
+--L["ankh_owner_is_reviving"] = "Conversion blocked - owner is reviving"

@@ -39,3 +39,4 @@ L["ankh_revival_text"] = "Die Macht des Ankh wird dich in {time} Sekunde(n) wied
 L["ankh_revival_canceled"] = "Wiederbelebung abgebrochen."
 L["ankh_revival_canceled_text"] = "Deine Wiederbelebung wurde abgebrochen, da dein Ankh zerstört wurde."
 L["ankh_insufficient_room"] = "Nicht genügend Platz."
+L["ankh_owner_is_reviving"] = "Konvertierung blockiert - Beseitzer belebt sich wieder"
