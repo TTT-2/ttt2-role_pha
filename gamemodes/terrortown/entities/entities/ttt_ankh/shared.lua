@@ -38,6 +38,7 @@ function ENT:Initialize()
 	-- start ankh handling
 	PHARAOH_HANDLER:PlacedAnkh(self, self:GetOwner())
 	self:GetOwner().ankh_data = nil
+	self:SetNWBool("isReviving", false)
 
 	-- set up fingerprints
 	self.fingerprints = {}
@@ -89,17 +90,17 @@ if SERVER then
 	function ENT:Think()
 		self:HandleCloseRange()
 
-		if not IsValid(self.last_activatotor) then return end
+		if not IsValid(self.last_activator) then return end
 
 		local tr = util.TraceLine({
-			start = self.last_activatotor:GetShootPos(),
-			endpos = self.last_activatotor:GetShootPos() + self.last_activatotor:GetAimVector() * 100,
-			filter = self.last_activatotor,
+			start = self.last_activator:GetShootPos(),
+			endpos = self.last_activator:GetShootPos() + self.last_activator:GetAimVector() * 100,
+			filter = self.last_activator,
 			mask = MASK_SHOT
 		})
 
-		if tr.Entity ~= self or not self.last_activatotor:KeyDown(IN_USE) then
-			self.last_activatotor = nil
+		if tr.Entity ~= self or not self.last_activator:KeyDown(IN_USE) then
+			self.last_activator = nil
 			self.t_transfer_start = nil
 
 			-- set progress to be available for clients
@@ -117,9 +118,9 @@ function ENT:Use(activator, caller, type, value)
 	if not self:GetAdversary() or activator ~= self:GetAdversary() then return end
 
 	-- set last activator to detect release of use key after he lost focus
-	self.last_activatotor = activator
+	self.last_activator = activator
 
-	if not self.t_transfer_start then
+	if not self.t_transfer_start and not self:GetNWBool("isReviving", false) then
 		self.t_transfer_start = CurTime()
 
 		PHARAOH_HANDLER:StartConversion(self, self:GetOwner())
@@ -142,7 +143,7 @@ function ENT:UseOverride(activator)
 	if not IsValid(self:GetOwner()) or activator ~= self:GetOwner() then return end
 
 	-- do not pick up if player was previously converting the ankh
-	if self.last_activatotor then return end
+	if self.last_activator then return end
 
 	-- check if this roles is allowed to pick up
 	if activator == self:GetNWEntity("pharaoh", nil) and not GetGlobalBool("ttt_ankh_pharaoh_pickup", false) then return end
