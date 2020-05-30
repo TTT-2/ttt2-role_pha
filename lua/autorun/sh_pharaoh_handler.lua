@@ -369,7 +369,7 @@ function PHARAOH_HANDLER:SelectGraverobber()
 			p_vanilla_traitor[#p_vanilla_traitor + 1] = ply
 		end
 
-		if ply:GetTeam() == TEAM_TRAITOR and ply:IsTerror() then
+		if ply:GetBaseRole() == ROLE_TRAITOR and ply:IsTerror() then
 			p_team_traitor[#p_team_traitor + 1] = ply
 		end
 	end
