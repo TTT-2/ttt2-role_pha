@@ -353,9 +353,11 @@ if CLIENT then
 		tData:AddDescriptionLine(LANG.TryTranslation("ankh_short_desc"))
 
 		if client == ent:GetOwner() then
-			if (client == ent:GetNWEntity("pharaoh", nil) and GetGlobalBool("ttt_ankh_pharaoh_pickup", false)
+			if client:GetSubRole() == ROLE_PHARAOH and GetGlobalBool("ttt_ankh_pharaoh_pickup", false)
+				or client:GetSubRole() == ROLE_GRAVEROBBER and GetGlobalBool("ttt_ankh_graverobber_pickup", false)
+				and (client == ent:GetNWEntity("pharaoh", nil) and GetGlobalBool("ttt_ankh_pharaoh_pickup", false)
 				or client == ent:GetNWEntity("graverobber", nil) and GetGlobalBool("ttt_ankh_graverobber_pickup", false))
-				and client:GetSubRole() == ROLE_PHARAOH or client:GetSubRole() == ROLE_GRAVEROBBER
+				and not ent:GetNWBool("isReviving", false)
 			then
 				tData:SetKeyBinding("+use")
 
@@ -369,15 +371,21 @@ if CLIENT then
 				tData:SetSubtitle(LANG.TryTranslation("ankh_no_pickup"))
 			end
 		elseif client == ent:GetNWEntity("adversary", nil) then
-			tData:SetKeyBinding("+use")
-			tData:SetSubtitle(LANG.GetParamTranslation("ankh_convert", {usekey = Key("+use", "USE")}))
-
 			if ent:GetNWBool("isReviving", false) then
+				tData:AddIcon(
+					PHARAOH.iconMaterial,
+					PHARAOH.ltcolor
+				)
+				tData:SetSubtitle(LANG.TryTranslation("ankh_no_convert"))
+
 				tData:AddDescriptionLine(
 					LANG.TryTranslation("ankh_owner_is_reviving"),
 					COLOR_ORANGE
 				)
 			else
+				tData:SetKeyBinding("+use")
+				tData:SetSubtitle(LANG.GetParamTranslation("ankh_convert", {usekey = Key("+use", "USE")}))
+
 				tData:AddDescriptionLine(
 					LANG.GetParamTranslation("ankh_progress", {progress = ent:GetNWInt("conversion_progress", 0)}),
 					client:GetRoleColor()
