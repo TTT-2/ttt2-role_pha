@@ -66,7 +66,7 @@ if SERVER then
 	function SWEP:AnkhStick()
 		local ply = self:GetOwner()
 
-		if not IsValid(ply) or self.Planted then return end
+		if not IsValid(ply) then return end
 
 		if not PHARAOH_HANDLER:CanPlaceAnkh() then
 			LANG.Msg(ply, "ankh_no_traitor_alive")
@@ -74,18 +74,35 @@ if SERVER then
 			return
 		end
 
-		local ignore = {ply, self}
 		local spos = ply:GetShootPos()
 		local epos = spos + ply:GetAimVector() * 100
+
+		local ankhModelShift = Vector(-6, -1, 3.5)
+
+		local CheckFilder = function(ent)
+			if not IsValid(ent) or ent:IsPlayer() then
+				return false
+			end
+
+			if ent == self then
+				return false
+			end
+
+			if ent:HasPassableCollisionGrup() then
+				return false
+			end
+
+			return true
+		end
 
 		local tr = util.TraceLine({
 			start = spos,
 			endpos = epos,
-			filter = ignore,
+			filter = CheckFilder,
 			mask = MASK_SOLID
 		})
 
-		if not tr.HitWorld then return end
+		if not tr.Hit then return end
 
 		-- only allow placement on level ground
 		local dot_a_b = tr.HitNormal:Dot(Vector(0, 0, 1))
@@ -98,6 +115,12 @@ if SERVER then
 			return
 		end
 
+		if not spawn.IsSpawnPointSafe(ply, tr.HitPos + ankhModelShift, false, player.GetAll()) then
+			LANG.Msg(ply, "ankh_insufficient_room")
+
+			return
+		end
+
 		local ankh = ents.Create("ttt_ankh")
 		if not IsValid(ankh) then return end
 
@@ -106,7 +129,7 @@ if SERVER then
 		local tr_ent = util.TraceEntity({
 			start = spos,
 			endpos = epos,
-			filter = ignore,
+			filter = CheckFilder,
 			mask = MASK_SOLID
 		}, ankh)
 
@@ -115,12 +138,10 @@ if SERVER then
 		local ang = tr_ent.HitNormal:Angle()
 
 		-- shift ankh model since center is a bit offset
-		ankh:SetPos(tr_ent.HitPos + Vector(-6, -1, 3.5))
+		ankh:SetPos(tr_ent.HitPos + ankhModelShift)
 		ankh:SetAngles(ang)
 		ankh:SetOwner(ply)
 		ankh:Spawn()
-
-		ankh.IsOnWall = true
 
 		self:PlacedAnkh(ankh)
 	end
@@ -131,8 +152,6 @@ function SWEP:PlacedAnkh(ankh)
 
 	if not self:CanPrimaryAttack() then
 		self:Remove()
-
-		self.Planted = true
 	end
 end
 

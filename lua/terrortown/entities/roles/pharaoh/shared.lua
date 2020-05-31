@@ -32,6 +32,11 @@ function ROLE:PreInitialize()
 	}
 end
 
+function ROLE:Initialize()
+	roles.SetBaseRole(self, ROLE_INNOCENT)
+end
+
+
 if SERVER then
 	function ROLE:GiveRoleLoadout(ply, isRoleChange)
 		if not isRoleChange then return end

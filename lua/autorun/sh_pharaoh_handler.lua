@@ -92,7 +92,7 @@ function PHARAOH_HANDLER:TransferAnkhOwnership(ent, ply)
 	self:PlaySound("ankh_conversion", ent, player.GetAll())
 
 	-- show conversion popup to old owner
-	self:ShowPopup(ent:GetOwner(), "conversion_success")
+	self:ShowPopup(ent:GetOwner(), "conversionSuccess")
 
 	-- update status icons for both players
 	STATUS:RemoveStatus(ent:GetOwner(), "ttt_ankh_status")
@@ -139,6 +139,15 @@ end
 
 function PHARAOH_HANDLER:DestroyAnkh(ent, ply)
 	if CLIENT then return end
+
+	-- if a player is respawning with the use of the ankh, the popup
+	-- has to be replaced
+	if ent:GetNWBool("isReviving", false) and IsValid(ent.revivingPlayer) then
+		PHARAOH_HANDLER:RemovePopup(ent.revivingPlayer, "pharaohRevival")
+		PHARAOH_HANDLER:ShowPopup(ent.revivingPlayer, "pharaohRevivalCanceled")
+
+		ent.revivingPlayer:CancelRevival()
+	end
 
 	self:RemovedAnkh(ent)
 	self:AddDecal(ent, "rune_neutral")
@@ -195,6 +204,14 @@ end
 function PHARAOH_HANDLER:ShowPopup(ply, id)
 	net.Start("ttt2_net_pharaoh_show_popup")
 	net.WriteString(id)
+	net.WriteBool(true)
+	net.Send(ply)
+end
+
+function PHARAOH_HANDLER:RemovePopup(ply, id)
+	net.Start("ttt2_net_pharaoh_show_popup")
+	net.WriteString(id)
+	net.WriteBool(false)
 	net.Send(ply)
 end
 
@@ -292,17 +309,45 @@ if CLIENT then
 	end)
 
 	net.Receive("ttt2_net_pharaoh_show_popup", function()
-		local id = net.ReadString()
+		local client = LocalPlayer()
+		client.epopId = client.epopId or {}
 
-		if id == "conversion_success" then
-			EPOP:AddMessage(
-				{
-					text = LANG.GetTranslation("ankh_popup_converted_title"),
-					color = PHARAOH.ltcolor
-				},
-				LANG.GetTranslation("ankh_popup_converted_text"),
-				6
-			)
+		local id = net.ReadString()
+		local shouldAdd = net.ReadBool()
+
+		if shouldAdd then
+			if id == "conversionSuccess" then
+				client.epopId[id] = EPOP:AddMessage(
+					{
+						text = LANG.GetTranslation("ankh_popup_converted_title"),
+						color = PHARAOH.ltcolor
+					},
+					LANG.GetTranslation("ankh_popup_converted_text"),
+					6
+				)
+			elseif id == "pharaohRevival" then
+				client.epopId[id] = EPOP:AddMessage(
+					{
+						text = LANG.GetTranslation("ankh_revival"),
+						color = PHARAOH.ltcolor
+					},
+					LANG.GetParamTranslation("ankh_revival_text", {time = GetGlobalInt("ttt_ankh_respawn_time", 10)}),
+					GetGlobalInt("ttt_ankh_respawn_time", 10)
+				)
+			elseif id == "pharaohRevivalCanceled" then
+				client.epopId[id] = EPOP:AddMessage(
+					{
+						text = LANG.GetTranslation("ankh_revival_canceled"),
+						color = COLOR_ORANGE
+					},
+					LANG.GetTranslation("ankh_revival_canceled_text"),
+					10
+				)
+			end
+		else
+			if client.epopId[id] then
+				EPOP:RemoveMessage(client.epopId[id])
+			end
 		end
 	end)
 end
@@ -324,7 +369,7 @@ function PHARAOH_HANDLER:SelectGraverobber()
 			p_vanilla_traitor[#p_vanilla_traitor + 1] = ply
 		end
 
-		if ply:GetTeam() == TEAM_TRAITOR and ply:IsTerror() then
+		if ply:GetBaseRole() == ROLE_TRAITOR and ply:IsTerror() then
 			p_team_traitor[#p_team_traitor + 1] = ply
 		end
 	end
@@ -366,33 +411,45 @@ hook.Add("TTT2PostPlayerDeath", "ttt2_role_pharaoh_death", function(victim, infl
 	-- the victim must be the current owner of the ankh
 	if victim ~= victim.ankh:GetOwner() then return end
 
-	victim:Revive(10, function(ply)
-		local ankh_pos = ply.ankh:GetPos() + Vector(0, 0, 2.5)
+	-- show a information popup to the victim
+	PHARAOH_HANDLER:ShowPopup(victim, "pharaohRevival")
 
-		-- destroying the ankh on revival
-		PHARAOH_HANDLER:DestroyAnkh(ply.ankh, ply)
+	-- set state to ank that a player is reviving
+	victim.ankh:SetNWBool("isReviving", true)
+	victim.ankh.revivingPlayer = victim
 
-		-- porting the player to the ankh
-		ply:SetPos(ankh_pos)
+	local ankh_pos = victim.ankh:GetPos() + Vector(0, 0, 2.5)
 
-		-- et player HP to 50
-		ply:SetHealth(50)
+	victim:Revive(GetGlobalInt("ttt_ankh_respawn_time", 10),
+		function(ply)
+			-- set state to ank that a player is no longer reviving
+			ply.ankh:SetNWBool("isReviving", false)
+			ply.ankh.revivingPlayer = nil
 
-		-- spawn smoke
-		PHARAOH_HANDLER:SpawnEffects(ankh_pos)
+			-- destroying the ankh on revival
+			PHARAOH_HANDLER:DestroyAnkh(ply.ankh, ply)
 
-		-- play sound
-		sound.Play("ankh_respawn", ankh_pos, 200, 100, 1.0)
-	end,
-	function(ply)
-		-- make sure the revival is still valid
-		return GetRoundState() == ROUND_ACTIVE and IsValid(ply) and not ply:Alive() and ply.ankh and ply == ply.ankh:GetOwner()
-	end,
-	false, -- no corpse needed for respawn
-	true, -- force revival
-	function(ply)
-		-- on fail todo
-	end)
+			-- set player HP to 50
+			ply:SetHealth(50)
+
+			-- spawn smoke
+			PHARAOH_HANDLER:SpawnEffects(ankh_pos)
+
+			-- play sound
+			sound.Play("ankh_respawn", ankh_pos, 200, 100, 1.0)
+
+			-- remove popup
+			PHARAOH_HANDLER:RemovePopup(victim, "pharaohRevival")
+		end,
+		function(ply)
+			-- make sure the revival is still valid
+			return GetRoundState() == ROUND_ACTIVE and IsValid(ply) and not ply:Alive() and IsValid(ply.ankh) and ply == ply.ankh:GetOwner()
+		end,
+		false, -- no corpse needed for respawn
+		true, -- force revival
+		nil,
+		ankh_pos
+	)
 end)
 
 hook.Add("TTTBeginRound", "ttt2_role_pharaoh_reset", function()

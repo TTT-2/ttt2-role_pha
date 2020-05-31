@@ -25,9 +25,13 @@ function ROLE:PreInitialize()
 		maximum = 1, -- maximum amount of roles in a round
 		minPlayers = 6, -- minimum amount of players until this role is able to get selected
 		credits = 0, -- the starting credits of a specific role
-		shopFallback = SHOP_TRAITOR,
+		shopFallback = SHOP_FALLBACK_TRAITOR,
 		togglable = true, -- option to toggle a role for a client if possible (F1 menu)
 		traitorButton = 1, -- can use traitor buttons
 		random = 50
 	}
+end
+
+function ROLE:Initialize()
+	roles.SetBaseRole(self, ROLE_TRAITOR)
 end

@@ -38,6 +38,7 @@ function ENT:Initialize()
 	-- start ankh handling
 	PHARAOH_HANDLER:PlacedAnkh(self, self:GetOwner())
 	self:GetOwner().ankh_data = nil
+	self:SetNWBool("isReviving", false)
 
 	-- set up fingerprints
 	self.fingerprints = {}
@@ -89,17 +90,17 @@ if SERVER then
 	function ENT:Think()
 		self:HandleCloseRange()
 
-		if not IsValid(self.last_activatotor) then return end
+		if not IsValid(self.last_activator) then return end
 
 		local tr = util.TraceLine({
-			start = self.last_activatotor:GetShootPos(),
-			endpos = self.last_activatotor:GetShootPos() + self.last_activatotor:GetAimVector() * 100,
-			filter = self.last_activatotor,
+			start = self.last_activator:GetShootPos(),
+			endpos = self.last_activator:GetShootPos() + self.last_activator:GetAimVector() * 100,
+			filter = self.last_activator,
 			mask = MASK_SHOT
 		})
 
-		if tr.Entity ~= self or not self.last_activatotor:KeyDown(IN_USE) then
-			self.last_activatotor = nil
+		if tr.Entity ~= self or not self.last_activator:KeyDown(IN_USE) then
+			self.last_activator = nil
 			self.t_transfer_start = nil
 
 			-- set progress to be available for clients
@@ -117,7 +118,9 @@ function ENT:Use(activator, caller, type, value)
 	if not self:GetAdversary() or activator ~= self:GetAdversary() then return end
 
 	-- set last activator to detect release of use key after he lost focus
-	self.last_activatotor = activator
+	self.last_activator = activator
+
+	if self:GetNWBool("isReviving", false) then return end
 
 	if not self.t_transfer_start then
 		self.t_transfer_start = CurTime()
@@ -142,7 +145,7 @@ function ENT:UseOverride(activator)
 	if not IsValid(self:GetOwner()) or activator ~= self:GetOwner() then return end
 
 	-- do not pick up if player was previously converting the ankh
-	if self.last_activatotor then return end
+	if self.last_activator then return end
 
 	-- check if this roles is allowed to pick up
 	if activator == self:GetNWEntity("pharaoh", nil) and not GetGlobalBool("ttt_ankh_pharaoh_pickup", false) then return end
@@ -305,7 +308,7 @@ if CLIENT then
 
 		if self:GetNWEntity("pharaoh", nil) == self:GetOwner() then
 			color = PHARAOH.color
-		elseif self:GetNWEntity("pharaoh", nil) == self:GetOwner() then
+		elseif self:GetNWEntity("graverobber", nil) == self:GetOwner() then
 			color = GRAVEROBBER.color
 		end
 
@@ -350,9 +353,11 @@ if CLIENT then
 		tData:AddDescriptionLine(LANG.TryTranslation("ankh_short_desc"))
 
 		if client == ent:GetOwner() then
-			if (client == ent:GetNWEntity("pharaoh", nil) and GetGlobalBool("ttt_ankh_pharaoh_pickup", false)
+			if client:GetSubRole() == ROLE_PHARAOH and GetGlobalBool("ttt_ankh_pharaoh_pickup", false)
+				or client:GetSubRole() == ROLE_GRAVEROBBER and GetGlobalBool("ttt_ankh_graverobber_pickup", false)
+				and (client == ent:GetNWEntity("pharaoh", nil) and GetGlobalBool("ttt_ankh_pharaoh_pickup", false)
 				or client == ent:GetNWEntity("graverobber", nil) and GetGlobalBool("ttt_ankh_graverobber_pickup", false))
-				and client:GetSubRole() == ROLE_PHARAOH or client:GetSubRole() == ROLE_GRAVEROBBER
+				and not ent:GetNWBool("isReviving", false)
 			then
 				tData:SetKeyBinding("+use")
 
@@ -366,13 +371,26 @@ if CLIENT then
 				tData:SetSubtitle(LANG.TryTranslation("ankh_no_pickup"))
 			end
 		elseif client == ent:GetNWEntity("adversary", nil) then
-			tData:SetKeyBinding("+use")
-			tData:SetSubtitle(LANG.GetParamTranslation("ankh_convert", {usekey = Key("+use", "USE")}))
+			if ent:GetNWBool("isReviving", false) then
+				tData:AddIcon(
+					PHARAOH.iconMaterial,
+					PHARAOH.ltcolor
+				)
+				tData:SetSubtitle(LANG.TryTranslation("ankh_no_convert"))
 
-			tData:AddDescriptionLine(
-				LANG.GetParamTranslation("ankh_progress", {progress = ent:GetNWInt("conversion_progress", 0)}),
-				client:GetRoleColor()
-			)
+				tData:AddDescriptionLine(
+					LANG.TryTranslation("ankh_owner_is_reviving"),
+					COLOR_ORANGE
+				)
+			else
+				tData:SetKeyBinding("+use")
+				tData:SetSubtitle(LANG.GetParamTranslation("ankh_convert", {usekey = Key("+use", "USE")}))
+
+				tData:AddDescriptionLine(
+					LANG.GetParamTranslation("ankh_progress", {progress = ent:GetNWInt("conversion_progress", 0)}),
+					client:GetRoleColor()
+				)
+			end
 		else
 			tData:AddIcon(
 				PHARAOH.iconMaterial,
