@@ -399,6 +399,32 @@ function PHARAOH_HANDLER:CanPlaceAnkh()
 	return false
 end
 
+function PHARAOH_HANDLER:GiveSpawnProtection(ply)
+	local ent = ents.Create("prop_physics")
+
+	ent:SetModel("models/hunter/tubes/tube1x1x2c.mdl")
+	ent:SetPos(ply:EyePos() + Vector(0, 0, 35))
+	ent:SetAngles(ply:EyeAngles() + Angle(160, 0, 0))
+	ent:SetParent(ply)
+	ent:Spawn()
+
+	ent:SetMaterial("models/effects/splodearc_sheet")
+	ent:SetCollisionGroup(COLLISION_GROUP_WORLD)
+	ent:SetMoveType(MOVETYPE_NONE)
+
+	undo.Create("Shield")
+	undo.AddEntity(ent)
+	undo.Finish()
+
+	ply.classPatronus_shield = ent
+
+	timer.Simple(GetConVar("ttt_ankh_respawn_protection_time"):GetInt(), function()
+		if not IsValid(ply) or not IsValid(ent) then return end
+
+		ent:Remove("Shield")
+	end)
+end
+
 ---
 -- using TTT2PostPlayerDeath hook here, since it is called at the very last, addons like
 -- a second change are triggered prior to this hook (SERVER ONLY)
@@ -439,7 +465,10 @@ hook.Add("TTT2PostPlayerDeath", "ttt2_role_pharaoh_death", function(victim, infl
 			sound.Play("ankh_respawn", ankh_pos, 200, 100, 1.0)
 
 			-- remove popup
-			PHARAOH_HANDLER:RemovePopup(victim, "pharaohRevival")
+			PHARAOH_HANDLER:RemovePopup(ply, "pharaohRevival")
+
+			-- give some spawn protextion
+			PHARAOH_HANDLER:GiveSpawnProtection(ply)
 		end,
 		function(ply)
 			-- make sure the revival is still valid

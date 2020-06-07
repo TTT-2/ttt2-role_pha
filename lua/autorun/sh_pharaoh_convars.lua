@@ -6,6 +6,7 @@ CreateConVar("ttt_ankh_graverobber_pickup", 0, {FCVAR_NOTIFY, FCVAR_ARCHIVE})
 CreateConVar("ttt_ankh_heal_ankh", 1, {FCVAR_NOTIFY, FCVAR_ARCHIVE})
 CreateConVar("ttt_ankh_heal_owner", 1, {FCVAR_NOTIFY, FCVAR_ARCHIVE})
 CreateConVar("ttt_ankh_light_up", 1, {FCVAR_NOTIFY, FCVAR_ARCHIVE})
+CreateConVar("ttt_ankh_respawn_protection_time", 4, {FCVAR_NOTIFY, FCVAR_ARCHIVE})
 
 if SERVER then
 	-- ConVar replication is broken in GMod, so we do this, at least Alf added a hook!
@@ -68,4 +69,5 @@ hook.Add("TTTUlxDynamicRCVars", "ttt2_ulx_dynamic_pharaoh_convars", function(tbl
 	table.insert(tbl[ROLE_PHARAOH], {cvar = "ttt_ankh_conversion_time", slider = true, min = 0, max = 50, decimal = 0, desc = "ttt_ankh_conversion_time (def. 6)"})
 	table.insert(tbl[ROLE_PHARAOH], {cvar = "ttt_ankh_health", slider = true, min = 0, max = 1000, decimal = 0, desc = "ttt_ankh_health (def. 500)"})
 	table.insert(tbl[ROLE_PHARAOH], {cvar = "ttt_ankh_respawn_time", slider = true, min = 0, max = 60, decimal = 0, desc = "ttt_ankh_respawn_time (def. 10)"})
+	table.insert(tbl[ROLE_PHARAOH], {cvar = "ttt_ankh_respawn_protection_time", slider = true, min = 0, max = 30, decimal = 0, desc = "ttt_ankh_respawn_protection_time (def. 4)"})
 end)
