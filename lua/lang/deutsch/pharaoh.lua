@@ -20,7 +20,7 @@ L["ttt2_desc_" .. GRAVEROBBER.name] = [[Der Grabräuber ist ein Verräter und ei
 -- OTHER ROLE LANGUAGE STRINGS
 L["ttt2_weapon_ankh_name"] = "Ankh"
 L["ttt2_weapon_ankh_desc"] = "Platziere den Ankh auf dem Boden."
-L["weapon_ttt_ankh_help"] = "Nutze {primaryfire}, um den Ankh auf dem Boden zu platzieren."
+L["weapon_ttt_ankh_help"] = "Platziert den Ankh auf dem Boden"
 L["ankh_short_desc"] = "Ein mystisches Ding auf dem Boden, dass manchen Spielern erlaubt wiederbelebt zu werden."
 L["ankh_convert"] = "Halte [{usekey}], um zu konvertieren"
 L["ankh_no_convert"] = "Du kannst den Ankh aktuell nicht konvertieren"

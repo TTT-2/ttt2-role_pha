@@ -20,7 +20,7 @@ L["ttt2_desc_" .. GRAVEROBBER.name] = [[The Graverobber is a player in the trait
 -- OTHER ROLE LANGUAGE STRINGS
 L["ttt2_weapon_ankh_name"] = "Ankh"
 L["ttt2_weapon_ankh_desc"] = "Place this ankh on the ground."
-L["weapon_ttt_ankh_help"] = "Use {primaryfire} to place the ankh on the ground."
+L["weapon_ttt_ankh_help"] = "Places the ankh on the ground"
 L["ankh_short_desc"] = "A mystical thing on the ground that allows specific players to respawn."
 L["ankh_convert"] = "Hold [{usekey}] to convert"
 L["ankh_no_convert"] = "You can't convert this ankh right now"

@@ -167,7 +167,7 @@ if CLIENT then
 	end
 
 	function SWEP:Initialize()
-		self:AddHUDHelp("weapon_ttt_ankh_help", nil, true)
+		self:AddTTT2HUDHelp("weapon_ttt_ankh_help")
 
 		return self.BaseClass.Initialize(self)
 	end
