@@ -1,15 +1,15 @@
 if SERVER then
 	AddCSLuaFile()
-else -- CLIENT
-	SWEP.PrintName = "ttt2_weapon_ankh_name"
-	SWEP.Slot = 7
+end
 
+if CLIENT then
 	SWEP.ViewModelFOV = 10
 	SWEP.ViewModelFlip = false
 	SWEP.DrawCrosshair = false
 
 	SWEP.EquipMenuData = {
 		type = "item_weapon",
+		name = "ttt2_weapon_ankh_name",
 		desc = "ttt2_weapon_ankh_desc"
 	}
 
@@ -79,7 +79,7 @@ if SERVER then
 
 		local ankhModelShift = Vector(-6, -1, 3.5)
 
-		local CheckFilder = function(ent)
+		local CheckFilter = function(ent)
 			if not IsValid(ent) or ent:IsPlayer() then
 				return false
 			end
@@ -98,7 +98,7 @@ if SERVER then
 		local tr = util.TraceLine({
 			start = spos,
 			endpos = epos,
-			filter = CheckFilder,
+			filter = CheckFilter,
 			mask = MASK_SOLID
 		})
 
@@ -129,7 +129,7 @@ if SERVER then
 		local tr_ent = util.TraceEntity({
 			start = spos,
 			endpos = epos,
-			filter = CheckFilder,
+			filter = CheckFilter,
 			mask = MASK_SOLID
 		}, ankh)
 
