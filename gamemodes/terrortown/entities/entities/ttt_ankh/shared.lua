@@ -24,17 +24,6 @@ function ENT:Initialize()
 		self:SetUseType(CONTINUOUS_USE)
 	end
 
-	-- can pick this up if we own it
-	if SERVER then
-		local weptbl = util.WeaponForClass("weapon_ttt_ankh")
-
-		if weptbl and weptbl.Kind then
-			self.WeaponKind = weptbl.Kind
-		else
-			self.WeaponKind = WEAPON_EQUIP2
-		end
-	end
-
 	-- start ankh handling
 	PHARAOH_HANDLER:PlacedAnkh(self, self:GetOwner())
 	self:GetOwner().ankh_data = nil
@@ -155,7 +144,7 @@ function ENT:UseOverride(activator)
 	if activator:GetSubRole() ~= ROLE_PHARAOH and activator:GetSubRole() ~= ROLE_GRAVEROBBER then return end
 
 	-- picks up weapon, switches if possible and needed, returns weapon if successful
-	local wep = activator:PickupWeaponClass("weapon_ttt_ankh", true)
+	local wep = activator:SafePickupWeaponClass("weapon_ttt_ankh", true)
 
 	-- pickup failed because there was no room free in the inventory
 	if not IsValid(wep) then
