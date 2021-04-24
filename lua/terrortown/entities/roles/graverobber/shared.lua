@@ -10,9 +10,11 @@ function ROLE:PreInitialize()
 	self.color = Color(200, 100, 60, 255)
 
 	self.abbr = "grav"
-	self.surviveBonus = 0
-	self.scoreKillsMultiplier = 1
-	self.scoreTeamKillsMultiplier = -16
+	self.score.surviveBonusMultiplier = 0.5
+	self.score.timelimitMultiplier = -0.5
+	self.score.killsMultiplier = 2
+	self.score.teamKillsMultiplier = -16
+	self.score.bodyFoundMuliplier = 0
 	self.preventFindCredits = false
 	self.preventKillCredits = false
 	self.preventTraitorAloneCredits = false
