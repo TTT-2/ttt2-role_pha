@@ -8,6 +8,10 @@ if SERVER then
 
 	resource.AddFile("materials/pharaohs_ankh/pharaohs_ankh/pharaohs_ankh.vmt")
 
+	resource.AddFile("materials/vgui/ttt/vskin/events/ankh_conversion.vmt")
+	resource.AddFile("materials/vgui/ttt/vskin/events/ankh_destroyed.vmt")
+	resource.AddFile("materials/vgui/ttt/vskin/events/ankh_revive.vmt")
+
 	resource.AddFile("sound/ankh/conversion.wav")
 	resource.AddFile("sound/ankh/converting.wav")
 	resource.AddFile("sound/ankh/respawn.wav")

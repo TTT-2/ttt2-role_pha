@@ -98,6 +98,9 @@ function PHARAOH_HANDLER:TransferAnkhOwnership(ent, ply)
 	STATUS:RemoveStatus(ent:GetOwner(), "ttt_ankh_status")
 	STATUS:AddStatus(ent:GetAdversary(), "ttt_ankh_status", 1)
 
+	-- trigger the event for the scoreboard
+	events.Trigger(EVENT_ANKH_CONVERSION, ent:GetOwner(), ent:GetAdversary())
+
 	-- add fingerprints to the ent
 	if not table.HasValue(ent.fingerprints, ent:GetAdversary()) then
 		ent.fingerprints[#ent.fingerprints + 1] = ent:GetAdversary()
@@ -137,8 +140,13 @@ function PHARAOH_HANDLER:RemoveWallhack(ent, ply)
 	net.Send(ply)
 end
 
-function PHARAOH_HANDLER:DestroyAnkh(ent, ply)
+function PHARAOH_HANDLER:DestroyAnkh(ent, ply, silent)
 	if CLIENT then return end
+
+	-- trigger the event for the scoreboard
+	if not silent then
+		events.Trigger(EVENT_ANKH_DESTROYED, ent:GetOwner(), ply)
+	end
 
 	-- if a player is respawning with the use of the ankh, the popup
 	-- has to be replaced
@@ -453,7 +461,7 @@ hook.Add("TTT2PostPlayerDeath", "ttt2_role_pharaoh_death", function(victim, infl
 			ply.ankh.revivingPlayer = nil
 
 			-- destroying the ankh on revival
-			PHARAOH_HANDLER:DestroyAnkh(ply.ankh, ply)
+			PHARAOH_HANDLER:DestroyAnkh(ply.ankh, ply, true)
 
 			-- set player HP to 50
 			ply:SetHealth(50)
@@ -469,6 +477,9 @@ hook.Add("TTT2PostPlayerDeath", "ttt2_role_pharaoh_death", function(victim, infl
 
 			-- give some spawn protextion
 			PHARAOH_HANDLER:GiveSpawnProtection(ply)
+
+			-- trigger the event for the scoreboard
+			events.Trigger(EVENT_ANKH_REVIVE, ply)
 		end,
 		function(ply)
 			-- make sure the revival is still valid
