@@ -38,6 +38,7 @@ SWEP.Secondary.Delay = 1.0
 SWEP.Kind = WEAPON_EXTRA
 SWEP.CanBuy = nil
 SWEP.LimitedStock = true -- only buyable once
+SWEP.notBuyable = true
 
 SWEP.AllowDrop = false
 SWEP.NoSights = true
