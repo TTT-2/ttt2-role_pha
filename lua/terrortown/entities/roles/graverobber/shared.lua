@@ -37,3 +37,16 @@ end
 function ROLE:Initialize()
 	roles.SetBaseRole(self, ROLE_TRAITOR)
 end
+
+if SERVER then
+	function ROLE:GiveRoleLoadout(ply, isRoleChange)
+		PHARAOH_HANDLER:SetClientCanConvAnkh(ply)
+	end
+
+	function ROLE:RemoveRoleLoadout(ply, isRoleChange)
+		ply:StripWeapon('weapon_ttt_ankh')
+
+		-- Since we're removing any ankh the graverobber happens to own, we need to remove the data as well.
+		PHARAOH_HANDLER:RemoveAnkhDataFromLoadout(ply)
+	end
+end

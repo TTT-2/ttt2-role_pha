@@ -69,9 +69,7 @@ if SERVER then
 
 		if not IsValid(ply) then return end
 
-		if not PHARAOH_HANDLER:CanPlaceAnkh() then
-			LANG.Msg(ply, "ankh_no_traitor_alive")
-
+		if not PHARAOH_HANDLER:CanPlaceAnkh(ply) then
 			return
 		end
 

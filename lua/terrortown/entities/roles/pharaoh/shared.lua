@@ -38,12 +38,21 @@ end
 
 if SERVER then
 	function ROLE:GiveRoleLoadout(ply, isRoleChange)
-		if not isRoleChange then return end
+		PHARAOH_HANDLER:SetClientCanConvAnkh(ply)
 
-		ply:GiveEquipmentWeapon('weapon_ttt_ankh')
+		if isRoleChange then
+			if not PHARAOH_HANDLER:PlayerOwnsAnAnkh(ply) then
+				ply:GiveEquipmentWeapon('weapon_ttt_ankh')
+			else
+				LANG.Msg(ply, "ankh_already_owned")
+			end
+		end
 	end
 
 	function ROLE:RemoveRoleLoadout(ply, isRoleChange)
 		ply:StripWeapon('weapon_ttt_ankh')
+
+		-- Since we're removing any ankh the pharaoh happens to own, we need to remove the data as well.
+		PHARAOH_HANDLER:RemoveAnkhDataFromLoadout(ply)
 	end
 end

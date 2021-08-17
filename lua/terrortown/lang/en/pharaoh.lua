@@ -15,7 +15,7 @@ Search for the placed Ankh and try to use it for your benefit!]]
 L["body_found_" .. GRAVEROBBER.abbr] = "They were a Graverobber."
 L["search_role_" .. GRAVEROBBER.abbr] = "This person was a Graverobber!"
 L["target_" .. GRAVEROBBER.name] = "Graverobber"
-L["ttt2_desc_" .. GRAVEROBBER.name] = [[The Graverobber is a player in the traitor team that is the adversary of the pharao.]]
+L["ttt2_desc_" .. GRAVEROBBER.name] = [[The Graverobber is a player in the traitor team that is the adversary of the pharaoh.]]
 
 -- OTHER ROLE LANGUAGE STRINGS
 L["ttt2_weapon_ankh_name"] = "Ankh"
@@ -29,8 +29,9 @@ L["ankh_no_pickup"] = "You can't pick up this Ankh"
 L["ankh_health_points"] = "Health: {health} / {maxhealth}"
 L["ankh_progress"] = "Conversion Progress: {progress}%"
 L["ankh_broken"] = "Your ankh was broken."
-L["ankh_broken_adv"] = "The ankh was broken."
+L["ankh_broken_adv"] = "An ankh was broken."
 L["ankh_no_traitor_alive"] = "The Ankh can't be placed if no traitor is alive."
+L["ankh_already_owned"] = "There exists an ankh in this world that you own. As such, you will not receive another at this time."
 L["ankh_too_steep"] = "This surface is to steep to place an Ankh."
 L["ankh_selected_graverobber"] = "A traitor got converted to a graverobber. They are now your adversary!"
 L["ankh_popup_converted_title"] = "Your Ankh was Converted!"
