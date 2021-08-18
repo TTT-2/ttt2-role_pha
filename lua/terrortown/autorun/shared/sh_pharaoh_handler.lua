@@ -149,6 +149,22 @@ if SERVER then
 		end
 	end
 
+	function PHARAOH_HANDLER:SetClientCanConvAnkh(ply)
+		local can_conv = -2
+
+		if PHARAOH_HANDLER:PlayerIsOriginalOwnerOfAnAnkh(ply) and not PHARAOH_HANDLER:PlayerControlsAnAnkh(ply) and IsValid(self.ANKHS[ply:SteamID64()].ankh) then
+			-- the player can only convert this particular ankh
+			can_conv = self.ANKHS[ply:SteamID64()].ankh:EntIndex()
+		elseif ply:GetSubRole() == ROLE_GRAVEROBBER and not PHARAOH_HANDLER:PlayerOwnsAnAnkh(ply) then
+			-- the player can convert any ankh
+			can_conv = -1
+		end
+
+		net.Start("ttt2_net_pharaoh_can_conv")
+		net.WriteInt(can_conv, 16)
+		net.Send(ply)
+	end
+
 	function PHARAOH_HANDLER:UpdateAnkhDataUponRemoval(ent)
 		-- Maintain the Ankh's health in case it is being picked up and may later be placed down again
 		for original_owner_id, ankh_data in pairs(self.ANKHS) do
@@ -156,12 +172,22 @@ if SERVER then
 				ankh_data.health = ent:Health()
 				ankh_data.ankh = nil
 
+				-- update all players on what ankh(s) they can convert, in case the entity index of their current target becomes stale.
+				for _, ply in ipairs(player.GetAll()) do
+					PHARAOH_HANDLER:SetClientCanConvAnkh(ply)
+				end
+
 				return original_owner_id
 			end
 		end
 	end
 
 	function PHARAOH_HANDLER:RemoveAnkhData(ply)
+		-- explicitly check the validity of the player here, as they may have disconnected.
+		if not IsValid(ply) then
+			return
+		end
+
 		for original_owner_id, ankh_data in pairs(self.ANKHS) do
 			if ankh_data.current_owner_id == ply:SteamID64() then
 				self.ANKHS[original_owner_id] = nil
@@ -193,7 +219,7 @@ if SERVER then
 
 		-- update all players on what ankh(s) they can convert, in case the entity index of their current target becomes stale.
 		for _, ply in ipairs(player.GetAll()) do
-			SetClientCanConvAnkh(ply)
+			PHARAOH_HANDLER:SetClientCanConvAnkh(ply)
 		end
 
 		-- set the hp of the ankh
@@ -210,22 +236,6 @@ if SERVER then
 
 		-- add status icon to owner
 		STATUS:AddStatus(placer, "ttt_ankh_status", 1)
-	end
-
-	function PHARAOH_HANDLER:SetClientCanConvAnkh(ply)
-		local can_conv = -2
-
-		if PHARAOH_HANDLER:PlayerIsOriginalOwnerOfAnAnkh(ply) and not PHARAOH_HANDLER:PlayerControlsAnAnkh(ply) then
-			-- the player can only convert this particular ankh
-			can_conv = self.ANKHS[ply:SteamID64()].ankh:EntIndex()
-		elseif ply:GetSubRole() == ROLE_GRAVEROBBER and not PHARAOH_HANDLER:PlayerOwnsAnAnkh(ply) then
-			-- the player can convert any ankh
-			can_conv = -1
-		end
-
-		net.Start("ttt2_net_pharaoh_can_conv")
-		net.WriteInt(can_conv, 16)
-		net.Send(ply)
 	end
 
 	function PHARAOH_HANDLER:TransferAnkhOwnership(ent, ply)
@@ -273,9 +283,7 @@ if SERVER then
 	function PHARAOH_HANDLER:RemoveAnkhDataFromLoadout(ply)
 		-- if the player has an ankh in their inventory, remove it.
 		for original_owner_id, ankh_data in pairs(self.ANKHS) do
-			print("  current_owner_id=" .. tostring(ankh_data.current_owner_id) .. ", IsValid(ankh_data.ankh)=" .. tostring(IsValid(ankh_data.ankh)))
 			if ankh_data.current_owner_id == ply:SteamID64() and not IsValid(ankh_data.ankh) then
-				print("  Removing entry with ID " .. tostring(ankh_data.current_owner_id))
 				self.ANKHS[original_owner_id] = nil
 				break
 			end
@@ -304,9 +312,6 @@ if SERVER then
 
 		-- remove ankh data, which will allow the player to place another ankh down, should the opportunity arrive
 		self:RemoveAnkhData(ent:GetOwner())
-
-		-- tell the client if they can steal an ankh since the one they have got destroyed
-		PHARAOH_HANDLER:SetClientCanConvAnkh(ent:GetOwner())
 
 		local effect = EffectData()
 		effect:SetOrigin(ent:GetPos())
