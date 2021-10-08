@@ -114,7 +114,7 @@ if SERVER then
 			return
 		end
 
-		if not spawn.IsSpawnPointSafe(ply, tr.HitPos + ankhModelShift, false, player.GetAll()) then
+		if not plyspawn.IsSpawnPointSafe(ply, tr.HitPos + ankhModelShift, false, player.GetAll()) then
 			LANG.Msg(ply, "ankh_insufficient_room")
 
 			return
