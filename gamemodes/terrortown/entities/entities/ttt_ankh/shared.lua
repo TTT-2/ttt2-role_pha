@@ -25,12 +25,25 @@ function ENT:Initialize()
 	end
 
 	-- start ankh handling
-	PHARAOH_HANDLER:PlacedAnkh(self, self:GetOwner())
-	self:GetOwner().ankh_data = nil
+	if SERVER then
+		PHARAOH_HANDLER:PlacedAnkh(self, self:GetOwner())
+	end
 	self:SetNWBool("isReviving", false)
 
 	-- set up fingerprints
 	self.fingerprints = {}
+
+	if SERVER then
+		self:CallOnRemove("AnkhCallOnRemove", function(ent)
+			--If the owner is just picking it up or the round is over, then don't perform any theatrics. Just remove the entity
+			if self.picking_up or GetRoundState() ~= ROUND_ACTIVE then
+				return
+			end
+
+			--Otherwise the ankh is being removed via being damaged or being destroyed through 3rd party software (ex. Prop Exploder)
+			PHARAOH_HANDLER:DestroyAnkh(self, self.destroyer)
+		end)
+	end
 end
 
 function ENT:UpdateProgress()
@@ -104,17 +117,31 @@ function ENT:Use(activator, caller, type, value)
 	if not IsValid(activator) then return end
 
 	-- transfer ownership after a certain time has passed and the key was pressed down
-	if not self:GetAdversary() or activator ~= self:GetAdversary() then return end
+	if activator:GetSubRole() ~= ROLE_GRAVEROBBER and activator:GetSubRole() ~= ROLE_PHARAOH then
+		return
+	end
+
+	-- Players can only control one Ankh, and may not convert another until they use the one they control
+	if PHARAOH_HANDLER:PlayerControlsAnAnkh(activator) then
+		return
+	end
+
+	--Pharaohs may only convert ankhs that have been stolen from them.
+	if activator:GetSubRole() == ROLE_PHARAOH and not PHARAOH_HANDLER:PlayerIsOriginalOwnerOfThisAnkh(activator, self) then
+		return
+	end
 
 	-- set last activator to detect release of use key after he lost focus
 	self.last_activator = activator
 
-	if self:GetNWBool("isReviving", false) then return end
+	if self:GetNWBool("isReviving", false) then
+		return
+	end
 
 	if not self.t_transfer_start then
 		self.t_transfer_start = CurTime()
 
-		PHARAOH_HANDLER:StartConversion(self, self:GetOwner())
+		PHARAOH_HANDLER:StartConversion(self, activator)
 	end
 
 	if CurTime() - self.t_transfer_start > GetGlobalInt("ttt_ankh_conversion_time", 0) then
@@ -130,18 +157,12 @@ end
 function ENT:UseOverride(activator)
 	if not IsValid(activator) then return end
 
-	-- make sure activator is owner
-	if not IsValid(self:GetOwner()) or activator ~= self:GetOwner() then return end
-
 	-- do not pick up if player was previously converting the ankh
 	if self.last_activator then return end
 
-	-- check if this roles is allowed to pick up
-	if activator == self:GetNWEntity("pharaoh", nil) and not GetGlobalBool("ttt_ankh_pharaoh_pickup", false) then return end
-	if activator == self:GetNWEntity("graverobber", nil) and not GetGlobalBool("ttt_ankh_graverobber_pickup", false) then return end
-
-	-- make sure that the activator has one of the two allowed roles
-	if activator:GetSubRole() ~= ROLE_PHARAOH and activator:GetSubRole() ~= ROLE_GRAVEROBBER then return end
+	if not PHARAOH_HANDLER:CanPickUpAnkh(self, activator) then
+		return
+	end
 
 	-- picks up weapon, switches if possible and needed, returns weapon if successful
 	local wep = activator:SafePickupWeaponClass("weapon_ttt_ankh", true)
@@ -155,49 +176,26 @@ function ENT:UseOverride(activator)
 
 	PHARAOH_HANDLER:RemovedAnkh(self)
 
-	activator.ankh_data = {
-		pharaoh = self:GetNWEntity("pharaoh", nil),
-		graverobber = self:GetNWEntity("graverobber", nil),
-		owner = self:GetOwner(),
-		adversary = self:GetNWEntity("adversary", nil),
-		health = self:Health()
-	}
-
+	self.picking_up = true
 	self:Remove()
 end
 
-local zapsound = Sound("npc/assassin/ball_zap1.wav")
-
 function ENT:OnTakeDamage(dmginfo)
+	local attacker = dmginfo:GetAttacker()
+
+	---
+	-- @note Special roles that deal no damage to players shouldn't be able to damage the ankh (leads to griefing)
+	-- @realm server
+	if hook.Run("TTT2PharaohPreventDamageToAnkh", attacker) then
+		return
+	end
+
 	self:SetHealth(self:Health() - dmginfo:GetDamage())
 
 	if self:Health() > 0 then return end
 
-	PHARAOH_HANDLER:DestroyAnkh(self, dmginfo:GetAttacker())
-
-	local effect = EffectData()
-	effect:SetOrigin(self:GetPos())
-	util.Effect("cball_explode", effect)
-
-	sound.Play(zapsound, self:GetPos())
-
-	-- notify the current owner and his adversary that the ankh was broken
-	if IsValid(self:GetOwner()) then
-		LANG.Msg(self:GetOwner(), "ankh_broken")
-	end
-
-	if IsValid(self:GetAdversary()) then
-		LANG.Msg(self:GetAdversary(), "ankh_broken_adv")
-	end
-end
-
-function ENT:SetAdversary(ply)
-	self.adversary = ply
-	self:SetNWEntity("adversary", ply)
-end
-
-function ENT:GetAdversary()
-	return self.adversary
+	self.destroyer = attacker
+	self:Remove()
 end
 
 -- Copy pasted from C4
@@ -295,10 +293,10 @@ if CLIENT then
 		-- get the color the ent should light up
 		local color
 
-		if self:GetNWEntity("pharaoh", nil) == self:GetOwner() then
-			color = PHARAOH.color
-		elseif self:GetNWEntity("graverobber", nil) == self:GetOwner() then
+		if self:GetNWBool("is_stolen", false) then
 			color = GRAVEROBBER.color
+		else
+			color = PHARAOH.color
 		end
 
 		-- if the ent has no owner, it shouldn't light up
@@ -342,12 +340,7 @@ if CLIENT then
 		tData:AddDescriptionLine(LANG.TryTranslation("ankh_short_desc"))
 
 		if client == ent:GetOwner() then
-			if client:GetSubRole() == ROLE_PHARAOH and GetGlobalBool("ttt_ankh_pharaoh_pickup", false)
-				or client:GetSubRole() == ROLE_GRAVEROBBER and GetGlobalBool("ttt_ankh_graverobber_pickup", false)
-				and (client == ent:GetNWEntity("pharaoh", nil) and GetGlobalBool("ttt_ankh_pharaoh_pickup", false)
-				or client == ent:GetNWEntity("graverobber", nil) and GetGlobalBool("ttt_ankh_graverobber_pickup", false))
-				and not ent:GetNWBool("isReviving", false)
-			then
+			if PHARAOH_HANDLER:CanPickUpAnkh(ent, client) and not ent:GetNWBool("isReviving", false) then
 				tData:SetKeyBinding("+use")
 
 				tData:SetSubtitle(LANG.GetParamTranslation("target_pickup", {usekey = Key("+use", "USE")}))
@@ -359,7 +352,7 @@ if CLIENT then
 
 				tData:SetSubtitle(LANG.TryTranslation("ankh_no_pickup"))
 			end
-		elseif client == ent:GetNWEntity("adversary", nil) then
+		elseif client:GetSubRole() == ROLE_PHARAOH or client:GetSubRole() == ROLE_GRAVEROBBER then
 			if ent:GetNWBool("isReviving", false) then
 				tData:AddIcon(
 					PHARAOH.iconMaterial,
@@ -369,9 +362,9 @@ if CLIENT then
 
 				tData:AddDescriptionLine(
 					LANG.TryTranslation("ankh_owner_is_reviving"),
-					COLOR_ORANGE
+					client:GetRoleColor()
 				)
-			else
+			elseif client.ankh_can_conv == -1 or client.ankh_can_conv == ent:EntIndex() then
 				tData:SetKeyBinding("+use")
 				tData:SetSubtitle(LANG.GetParamTranslation("ankh_convert", {usekey = Key("+use", "USE")}))
 

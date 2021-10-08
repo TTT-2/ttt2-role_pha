@@ -3,70 +3,383 @@ if SERVER then
 	util.AddNetworkString("ttt2_net_pharaoh_wallack")
 	util.AddNetworkString("ttt2_net_pharaoh_start_sound")
 	util.AddNetworkString("ttt2_net_pharaoh_show_popup")
+	util.AddNetworkString("ttt2_net_pharaoh_can_conv")
 end
 
 PHARAOH_HANDLER = {}
 
-function PHARAOH_HANDLER:PlacedAnkh(ent, placer)
-	if CLIENT then return end
+local zapsound = Sound("npc/assassin/ball_zap1.wav")
 
-	-- first placement
-	if not placer.ankh_data then
-		-- selecting a graverobber, the adversary of the pharaoh
-		local p_graverobber = self:SelectGraverobber()
+if SERVER then
+	PHARAOH_HANDLER.ankhs = {}
 
-		-- if a valid player is found, he should be converted
-		if p_graverobber then
-			p_graverobber:SetRole(ROLE_GRAVEROBBER)
-			SendFullStateUpdate()
-
-			LANG.Msg(placer, "ankh_selected_graverobber")
+	function PHARAOH_HANDLER:GetOwnedAnkhDataId(ply)
+		-- "owner" is a concept that refers to up to two players: the pharaoh who placed the ankh and the graverobber who stole it
+		local ply_id = ply:SteamID64()
+		if self.ankhs[ply_id] then
+			-- the player owns an ankh that they received upon becoming a pharaoh
+			-- it may or may not have been stolen by a graverobber
+			-- it may or may not be in their inventory or a graverobber's inventory
+			return ply_id
 		end
 
-		-- set up data element
-		placer.ankh_data = {
-			pharaoh = placer,
-			graverobber = p_graverobber,
-			owner = placer,
-			adversary = p_graverobber,
+		for original_owner_id, ankh_data in pairs(self.ankhs) do
+			if ankh_data.current_owner_id == ply_id then
+				-- there is an ankh in this world that the player placed down which is currently under their ownership
+				-- they may have stolen it from a pharaoh
+				-- it may be in their inventory
+				return original_owner_id
+			end
+		end
+
+		return nil
+	end
+
+	function PHARAOH_HANDLER:PlayerIsOriginalOwnerOfAnAnkh(ply)
+		if self.ankhs[ply:SteamID64()] then
+			return true
+		end
+
+		return false
+	end
+
+	function PHARAOH_HANDLER:PlayerOwnsAnAnkh(ply)
+		-- operates under a "dual ownership" philosophy (i.e. a thief and the player they stole the thing from)
+		if self:GetOwnedAnkhDataId(ply) then
+			return true
+		end
+
+		return false
+	end
+
+	function PHARAOH_HANDLER:PlayerControlsAnAnkh(ply)
+		local original_owner_id = self:GetOwnedAnkhDataId(ply)
+		if original_owner_id and self.ankhs[original_owner_id].current_owner_id == ply:SteamID64() then
+			return true
+		end
+
+		return false
+	end
+
+	function PHARAOH_HANDLER:PlayerIsOriginalOwnerOfThisAnkh(ply, ent)
+		local original_owner_id = self:GetOwnedAnkhDataId(ply)
+
+		if original_owner_id and original_owner_id == ply:SteamID64() and self.ankhs[original_owner_id].ankh == ent then
+			return true
+		end
+
+		return false
+	end
+
+	function PHARAOH_HANDLER:PlayerOwnsAnAnkhOutsideOfLoadout(ply)
+		local original_owner_id = self:GetOwnedAnkhDataId(ply)
+
+		if original_owner_id then
+			--Player is the owner or the original owner of a placed ankh
+			if IsValid(self.ankhs[original_owner_id].ankh) then
+				return true
+			end
+
+			--Player is the original owner of a stolen ankh that is in some other player's inventory
+			if original_owner_id == ply:SteamID64() and original_owner_id ~= self.ankhs[original_owner_id].current_owner_id then
+				return true
+			end
+		end
+
+		return false
+	end
+
+	function PHARAOH_HANDLER:PlayerCanReviveWithThisAnkhDataId(ply)
+		-- Returns the id into PHARAOH_HANDLER.ankhs for the ankh that the player can use to revive.
+		-- Returns -1 otherwise.
+		local ply_id = ply:SteamID64()
+
+		-- See if the player owns a valid Ankh entity that someone else is the originator of
+		-- Prioritize stolen ankhs over originator ankhs to incentivize stealing
+		for original_owner_id, ankh_data in pairs(self.ankhs) do
+			if original_owner_id ~= ply_id and IsValid(ankh_data.ankh) and ankh_data.current_owner_id == ply_id then
+				return original_owner_id
+			end
+		end
+
+		-- See if the player owns a valid Ankh entity that they are the originator of
+		if self.ankhs[ply_id] and IsValid(self.ankhs[ply_id].ankh) and self.ankhs[ply_id].current_owner_id == ply_id then
+			return ply_id
+		end
+
+		return -1
+	end
+
+	function PHARAOH_HANDLER:CreateAnkhData(ent, placer)
+		-- The key into ANKHS is the original owner's ID (The Pharaoh who first placed the Ankh)
+		-- current_owner_id may update to reflect that a graverobber has stolen it.
+		-- ankh is the entity in question, and may update to be nil if the ankh is taken back into the current owner's inventory
+		local placer_id = placer:SteamID64()
+		self.ankhs[placer_id] = {
+			current_owner_id = placer_id,
+			ankh = ent,
 			health = GetGlobalInt("ttt_ankh_health")
 		}
+		self.ankhs[placer_id].ankh:SetNWBool("is_stolen", false)
+
+		return placer_id
 	end
 
-	-- set the hp of the ankh
-	ent:SetHealth(placer.ankh_data.health)
+	function PHARAOH_HANDLER:UpdateAnkhDataUponTransfer(ent, ply)
+		for original_owner_id, ankh_data in pairs(self.ankhs) do
+			if ankh_data.ankh == ent then
+				ankh_data.current_owner_id = ply:SteamID64()
+				ankh_data.ankh:SetNWBool("is_stolen", original_owner_id != ply:SteamID64())
 
-	-- drawing the decal on the ground
-	if placer:GetSubRole() == ROLE_PHARAOH then
-		self:AddDecal(ent, "rune_pharaoh")
-	else
-		self:AddDecal(ent, "rune_graverobber")
+				return original_owner_id
+			end
+		end
 	end
 
-	-- store ankh information to the players as well
-	placer.ankh_data.pharaoh.ankh = ent
-	if placer.ankh_data.graverobber then
-		placer.ankh_data.graverobber.ankh = ent
+	function PHARAOH_HANDLER:UpdateAnkhDataUponPlacement(ent, placer)
+		-- This ankh previously existed before it was taken back into the current owner's inventory
+		-- Now it has been placed into the world again
+		for original_owner_id, ankh_data in pairs(self.ankhs) do
+			if ankh_data.current_owner_id == placer:SteamID64() then
+				ankh_data.ankh = ent
+				ankh_data.ankh:SetNWBool("is_stolen", original_owner_id != placer:SteamID64())
+
+				return original_owner_id
+			end
+		end
 	end
 
-	-- setting the graverobber and pharao to this specific ankh
-	ent:SetNWEntity("pharaoh", placer.ankh_data.pharaoh)
-	ent:SetNWEntity("graverobber", placer.ankh_data.graverobber)
+	function PHARAOH_HANDLER:SetClientCanConvAnkh(ply)
+		local can_conv = -2
 
-	-- set new owner of ankh
-	ent:SetOwner(placer.ankh_data.owner)
-	ent:SetAdversary(placer.ankh_data.adversary)
+		if PHARAOH_HANDLER:PlayerIsOriginalOwnerOfAnAnkh(ply) and not PHARAOH_HANDLER:PlayerControlsAnAnkh(ply) and IsValid(self.ankhs[ply:SteamID64()].ankh) then
+			-- the player can only convert this particular ankh
+			can_conv = self.ankhs[ply:SteamID64()].ankh:EntIndex()
+		elseif ply:GetSubRole() == ROLE_GRAVEROBBER and not PHARAOH_HANDLER:PlayerOwnsAnAnkh(ply) then
+			-- the player can convert any ankh
+			can_conv = -1
+		end
 
-	-- add wallhack
-	self:AddWallhack(ent, placer)
+		net.Start("ttt2_net_pharaoh_can_conv")
+		net.WriteInt(can_conv, 16)
+		net.Send(ply)
+	end
 
-	-- add status icon to owner
-	STATUS:AddStatus(ent:GetOwner(), "ttt_ankh_status", 1)
+	function PHARAOH_HANDLER:UpdateAnkhDataUponRemoval(ent)
+		-- Maintain the Ankh's health in case it is being picked up and may later be placed down again
+		for original_owner_id, ankh_data in pairs(self.ankhs) do
+			if ankh_data.ankh == ent then
+				ankh_data.health = ent:Health()
+				ankh_data.ankh = nil
+
+				-- update all players on what ankh(s) they can convert, in case the entity index of their current target becomes stale.
+				for _, ply in ipairs(player.GetAll()) do
+					PHARAOH_HANDLER:SetClientCanConvAnkh(ply)
+				end
+
+				return original_owner_id
+			end
+		end
+	end
+
+	function PHARAOH_HANDLER:RemoveAnkhData(ply)
+		-- explicitly check the validity of the player here, as they may have disconnected.
+		if not IsValid(ply) then
+			return
+		end
+
+		for original_owner_id, ankh_data in pairs(self.ankhs) do
+			if ankh_data.current_owner_id == ply:SteamID64() then
+				self.ankhs[original_owner_id] = nil
+				break
+			end
+		end
+	end
+
+	function PHARAOH_HANDLER:PlacedAnkh(ent, placer)
+		local id = 0
+
+		-- first placement
+		if placer:GetSubRole() == ROLE_PHARAOH and not PHARAOH_HANDLER:PlayerOwnsAnAnkh(placer) then
+			-- selecting a graverobber, the adversary of the pharaoh
+			local p_graverobber = self:SelectGraverobber()
+
+			-- if a valid player is found, he should be converted
+			if p_graverobber then
+				p_graverobber:SetRole(ROLE_GRAVEROBBER)
+				SendFullStateUpdate()
+
+				LANG.Msg(placer, "ankh_selected_graverobber")
+			end
+
+			id = self:CreateAnkhData(ent, placer)
+		else
+			id = self:UpdateAnkhDataUponPlacement(ent, placer)
+		end
+
+		-- update all players on what ankh(s) they can convert, in case the entity index of their current target becomes stale.
+		for _, ply in ipairs(player.GetAll()) do
+			PHARAOH_HANDLER:SetClientCanConvAnkh(ply)
+		end
+
+		-- set the hp of the ankh
+		ent:SetHealth(self.ankhs[id].health)
+
+		-- drawing the decal on the ground
+		self:AddDecal(ent, id)
+
+		-- set owner of ankh
+		ent:SetOwner(placer)
+
+		-- add wallhack
+		self:AddWallhack(ent, placer)
+
+		-- add status icon to owner
+		STATUS:AddStatus(placer, "ttt_ankh_status", 1)
+	end
+
+	function PHARAOH_HANDLER:TransferAnkhOwnership(ent, ply)
+		if not IsValid(ply) then return end
+
+		local id = self:UpdateAnkhDataUponTransfer(ent, ply)
+
+		-- stop converting sound for old owner
+		self:StopSound("ankh_converting", ent)
+
+		-- play conversion sound for all players
+		self:PlaySound("ankh_conversion", ent, player.GetAll())
+
+		-- show conversion popup to old owner
+		self:ShowPopup(ent:GetOwner(), "conversionSuccess")
+
+		-- update status icons for both players
+		STATUS:RemoveStatus(ent:GetOwner(), "ttt_ankh_status")
+		STATUS:AddStatus(ply, "ttt_ankh_status", 1)
+
+		-- trigger the event for the scoreboard
+		events.Trigger(EVENT_ANKH_CONVERSION, ent:GetOwner(), ply)
+
+		-- add fingerprints to the ent
+		if not table.HasValue(ent.fingerprints, ply) then
+			ent.fingerprints[#ent.fingerprints + 1] = ply
+		end
+
+		-- removing the decal on the ground since it will be replaced
+		self:RemoveDecal(ent)
+		self:AddDecal(ent, id)
+
+		-- update wallhacks
+		self:RemoveWallhack(ent, ent:GetOwner())
+		self:AddWallhack(ent, ply)
+
+		-- Update conversion info for the old and new owners
+		PHARAOH_HANDLER:SetClientCanConvAnkh(ent:GetOwner())
+		PHARAOH_HANDLER:SetClientCanConvAnkh(ply)
+
+		-- finally transfer the ownership
+		ent:SetOwner(ply)
+	end
+
+	function PHARAOH_HANDLER:RemoveAnkhDataFromLoadout(ply)
+		-- if the player has an ankh in their inventory, remove it.
+		for original_owner_id, ankh_data in pairs(self.ankhs) do
+			if ankh_data.current_owner_id == ply:SteamID64() and not IsValid(ankh_data.ankh) then
+				self.ankhs[original_owner_id] = nil
+				break
+			end
+		end
+	end
+
+	function PHARAOH_HANDLER:DestroyAnkh(ent, destroyer)
+		-- trigger the event for the scoreboard
+		if not ent.using_to_revive then
+			events.Trigger(EVENT_ANKH_DESTROYED, ent:GetOwner(), destroyer)
+		end
+
+		-- if a player is respawning with the use of the ankh, the popup
+		-- has to be replaced
+		if ent:GetNWBool("isReviving", false) and IsValid(ent.revivingPlayer) then
+			self:RemovePopup(ent.revivingPlayer, "pharaohRevival")
+			self:ShowPopup(ent.revivingPlayer, "pharaohRevivalCanceled")
+
+			ent.revivingPlayer:CancelRevival()
+		end
+
+		self:RemovedAnkh(ent)
+
+		-- replace removed decal with rune_neutral
+		self:AddDecal(ent, -1)
+
+		-- remove ankh data, which will allow the player to place another ankh down, should the opportunity arrive
+		self:RemoveAnkhData(ent:GetOwner())
+
+		local effect = EffectData()
+		effect:SetOrigin(ent:GetPos())
+		util.Effect("cball_explode", effect)
+		sound.Play(zapsound, ent:GetPos())
+
+		-- notify the current owner that the ankh was broken
+		if IsValid(ent:GetOwner()) then
+			LANG.Msg(ent:GetOwner(), "ankh_broken")
+		end
+
+		-- notify all graverobbers that an ankh was broken
+		for _, ply in ipairs(player.GetAll()) do
+			if ply:GetSubRole() == ROLE_GRAVEROBBER and ent:GetOwner() ~= ply then
+				LANG.Msg(ply, "ankh_broken_adv")
+			end
+		end
+	end
+
+	function PHARAOH_HANDLER:RemovedAnkh(ent)
+		-- replace decal with inactive decal
+		self:RemoveDecal(ent)
+
+		-- remove status icon
+		STATUS:RemoveStatus(ent:GetOwner(), "ttt_ankh_status")
+
+		-- stop all possible sounds
+		self:StopSound("ankh_converting")
+		self:StopSound("ankh_conversion")
+		self:StopSound("ankh_respawn")
+
+		-- remove wallhack
+		self:RemoveWallhack(ent, ent:GetOwner())
+
+		self:UpdateAnkhDataUponRemoval(ent)
+	end
+end
+
+function PHARAOH_HANDLER:CanPickUpAnkh(ent, ply)
+	if GetRoundState() ~= ROUND_ACTIVE then
+		return false
+	end
+
+	-- make sure ply is owner
+	-- do not need to reference self.ankhs in this function, because by the time we get here, there will only be at most one ankh that the player is marked the owner of.
+	if not IsValid(ent:GetOwner()) or ply ~= ent:GetOwner() then
+		return false
+	end
+
+	-- make sure that the ply has one of the two allowed roles
+	if ply:GetSubRole() ~= ROLE_PHARAOH and ply:GetSubRole() ~= ROLE_GRAVEROBBER then
+		return false
+	end
+
+	-- check if this roles is allowed to pick up
+	if ply:GetSubRole() == ROLE_PHARAOH and not GetGlobalBool("ttt_ankh_pharaoh_pickup", false) then
+		return false
+	end
+	if ply:GetSubRole() == ROLE_GRAVEROBBER and not GetGlobalBool("ttt_ankh_graverobber_pickup", false) then
+		return false
+	end
+
+	return true
 end
 
 function PHARAOH_HANDLER:StartConversion(ent, ply)
 	-- start converting sound for old owner
-	self:PlaySound("ankh_converting", ent, {ent:GetOwner(), ent:GetAdversary()})
+	self:PlaySound("ankh_converting", ent, {ent:GetOwner(), ply})
 
 	-- update status icon
 	STATUS:SetActiveIcon(ent:GetOwner(), "ttt_ankh_status", 2)
@@ -78,52 +391,6 @@ function PHARAOH_HANDLER:CancelConversion(ent, ply)
 
 	-- update status icon
 	STATUS:SetActiveIcon(ent:GetOwner(), "ttt_ankh_status", 1)
-end
-
-function PHARAOH_HANDLER:TransferAnkhOwnership(ent, ply)
-	if CLIENT then return end
-
-	if not IsValid(ply) then return end
-
-	-- stop converting sound for old owner
-	self:StopSound("ankh_converting", ent)
-
-	-- play conversion sound for all players
-	self:PlaySound("ankh_conversion", ent, player.GetAll())
-
-	-- show conversion popup to old owner
-	self:ShowPopup(ent:GetOwner(), "conversionSuccess")
-
-	-- update status icons for both players
-	STATUS:RemoveStatus(ent:GetOwner(), "ttt_ankh_status")
-	STATUS:AddStatus(ent:GetAdversary(), "ttt_ankh_status", 1)
-
-	-- trigger the event for the scoreboard
-	events.Trigger(EVENT_ANKH_CONVERSION, ent:GetOwner(), ent:GetAdversary())
-
-	-- add fingerprints to the ent
-	if not table.HasValue(ent.fingerprints, ent:GetAdversary()) then
-		ent.fingerprints[#ent.fingerprints + 1] = ent:GetAdversary()
-	end
-
-	-- flip adversary and owner
-	ent:SetAdversary(ent:GetOwner())
-	ent:SetOwner(ply)
-
-	-- removing the decal on the ground since it will be replaced
-	self:RemoveDecal(ent)
-
-	if ply == ent:GetNWEntity("pharaoh") then
-		self:AddDecal(ent, "rune_pharaoh")
-	end
-
-	if ply == ent:GetNWEntity("graverobber") then
-		self:AddDecal(ent, "rune_graverobber")
-	end
-
-	-- update wallhacks
-	self:RemoveWallhack(ent, ent:GetAdversary())
-	self:AddWallhack(ent, ent:GetOwner())
 end
 
 function PHARAOH_HANDLER:AddWallhack(ent, ply)
@@ -140,57 +407,27 @@ function PHARAOH_HANDLER:RemoveWallhack(ent, ply)
 	net.Send(ply)
 end
 
-function PHARAOH_HANDLER:DestroyAnkh(ent, ply, silent)
-	if CLIENT then return end
-
-	-- trigger the event for the scoreboard
-	if not silent then
-		events.Trigger(EVENT_ANKH_DESTROYED, ent:GetOwner(), ply)
+function PHARAOH_HANDLER:AddDecal(ent, original_owner_id)
+	-- determine the type of decal to add
+	local decal_type = "rune_neutral"
+	if self.ankhs[original_owner_id] then
+		if ent:GetNWBool("is_stolen", false) then
+			decal_type = "rune_graverobber"
+		else
+			decal_type = "rune_pharaoh"
+		end
 	end
 
-	-- if a player is respawning with the use of the ankh, the popup
-	-- has to be replaced
-	if ent:GetNWBool("isReviving", false) and IsValid(ent.revivingPlayer) then
-		PHARAOH_HANDLER:RemovePopup(ent.revivingPlayer, "pharaohRevival")
-		PHARAOH_HANDLER:ShowPopup(ent.revivingPlayer, "pharaohRevivalCanceled")
-
-		ent.revivingPlayer:CancelRevival()
-	end
-
-	self:RemovedAnkh(ent)
-	self:AddDecal(ent, "rune_neutral")
-
-	ent:Remove()
-end
-
-function PHARAOH_HANDLER:RemovedAnkh(ent)
-	if CLIENT then return end
-
-	-- replace decal with inactive decal
-	self:RemoveDecal(ent)
-
-	-- remove status icon
-	STATUS:RemoveStatus(ent:GetOwner(), "ttt_ankh_status")
-
-	-- stop all possible sounds
-	self:StopSound("ankh_converting")
-	self:StopSound("ankh_conversion")
-	self:StopSound("ankh_respawn")
-
-	-- remove wallhack
-	self:RemoveWallhack(ent, ent:GetOwner())
-end
-
-function PHARAOH_HANDLER:AddDecal(ent, type)
 	-- ignore the ankh at all players
 	local filter = {ent}
 	table.Add(filter, player.GetAll())
 
 	-- store the decal id on this ent for easier removal
-	ent.decal_id = "ankh_decal_" .. tostring(ent:EntIndex())
+	-- Use EntIndex and CurTime() to ensure uniqueness (otherwise decal operations may affect multiple decals unwittingly).
+	ent.decal_id = "ankh_decal_" .. tostring(ent:EntIndex()) .. "_" .. tostring(CurTime())
 
 	-- shift decal to offset shift of model
-	util.PaintDownRemovable(ent.decal_id, ent:GetPos() + Vector(7, 1, 20), type, filter)
+	util.PaintDownRemovable(ent.decal_id, ent:GetPos() + Vector(7, 1, 20), decal_type, filter)
 end
 
 function PHARAOH_HANDLER:RemoveDecal(ent)
@@ -346,7 +583,7 @@ if CLIENT then
 				client.epopId[id] = EPOP:AddMessage(
 					{
 						text = LANG.GetTranslation("ankh_revival_canceled"),
-						color = COLOR_ORANGE
+						color = GRAVEROBBER.ltcolor
 					},
 					LANG.GetTranslation("ankh_revival_canceled_text"),
 					10
@@ -358,12 +595,23 @@ if CLIENT then
 			end
 		end
 	end)
+
+	net.Receive("ttt2_net_pharaoh_can_conv", function()
+		local client = LocalPlayer()
+		client.ankh_can_conv = net.ReadInt(16)
+	end)
+
+	hook.Add("TTTBeginRound", "ttt2_role_pharaoh_reset", function()
+		local client = LocalPlayer()
+		client.ankh_can_conv = nil
+	end)
 end
 
 ---
 -- Returns a player that can be converted to a graverobber
 -- Vanilla T players are preferred, other team traitor players are used as
 -- a fallback
+-- Does not select a graverobber if a graverobber already exists
 function PHARAOH_HANDLER:SelectGraverobber()
 	local p_vanilla_traitor = {}
 	local p_team_traitor = {}
@@ -372,6 +620,10 @@ function PHARAOH_HANDLER:SelectGraverobber()
 
 	for i = 1, #plys do
 		local ply = plys[i]
+
+		if ply:GetSubRole() == ROLE_GRAVEROBBER then
+			return
+		end
 
 		if ply:GetSubRole() == ROLE_TRAITOR and ply:IsTerror() then
 			p_vanilla_traitor[#p_vanilla_traitor + 1] = ply
@@ -392,9 +644,20 @@ function PHARAOH_HANDLER:SelectGraverobber()
 end
 
 ---
--- The ank can only be placed if at least one traitor is still alive
-function PHARAOH_HANDLER:CanPlaceAnkh()
+-- The ankh can only be placed if at least one traitor is still alive
+function PHARAOH_HANDLER:CanPlaceAnkh(placer)
 	local plys = player.GetAll()
+
+	if GetRoundState() ~= ROUND_ACTIVE then
+		return false
+	end
+
+	if self:PlayerOwnsAnAnkhOutsideOfLoadout(placer) then
+		if SERVER then
+			LANG.Msg(placer, "ankh_already_owned")
+		end
+		return false
+	end
 
 	for i = 1, #plys do
 		local ply = plys[i]
@@ -404,6 +667,9 @@ function PHARAOH_HANDLER:CanPlaceAnkh()
 		end
 	end
 
+	if SERVER then
+		LANG.Msg(placer, "ankh_no_traitor_alive")
+	end
 	return false
 end
 
@@ -433,67 +699,74 @@ function PHARAOH_HANDLER:GiveSpawnProtection(ply)
 	end)
 end
 
----
--- using TTT2PostPlayerDeath hook here, since it is called at the very last, addons like
--- a second change are triggered prior to this hook (SERVER ONLY)
-hook.Add("TTT2PostPlayerDeath", "ttt2_role_pharaoh_death", function(victim, inflictor, attacker)
-	if GetRoundState() ~= ROUND_ACTIVE then return end
+if SERVER then
+	---
+	-- using TTT2PostPlayerDeath hook here, since it is called at the very last, addons like
+	-- a second change are triggered prior to this hook (SERVER ONLY)
+	hook.Add("TTT2PostPlayerDeath", "ttt2_role_pharaoh_death", function(victim, inflictor, attacker)
+		if not IsValid(victim) then return end
 
-	-- victim must be either a pharaoh or graverobber with an ankh
-	if not IsValid(victim) or not IsValid(victim.ankh) then return end
+		-- Any ankhs that the ply will have in their loadout will be removed when they die. So remove the associated ankh_data as well.
+		PHARAOH_HANDLER:RemoveAnkhDataFromLoadout(victim)
 
-	-- the victim must be the current owner of the ankh
-	if victim ~= victim.ankh:GetOwner() then return end
+		if GetRoundState() ~= ROUND_ACTIVE then return end
 
-	-- show a information popup to the victim
-	PHARAOH_HANDLER:ShowPopup(victim, "pharaohRevival")
+		-- victim must be either a pharaoh or graverobber with an ankh
+		local id = PHARAOH_HANDLER:PlayerCanReviveWithThisAnkhDataId(victim)
+		if not PHARAOH_HANDLER.ankhs[id] or not IsValid(PHARAOH_HANDLER.ankhs[id].ankh) then return end
 
-	-- set state to ank that a player is reviving
-	victim.ankh:SetNWBool("isReviving", true)
-	victim.ankh.revivingPlayer = victim
+		-- the victim must be the current owner of the ankh
+		if victim:SteamID64() ~= PHARAOH_HANDLER.ankhs[id].current_owner_id then return end
 
-	local ankh_pos = victim.ankh:GetPos() + Vector(0, 0, 2.5)
+		-- show a information popup to the victim
+		PHARAOH_HANDLER:ShowPopup(victim, "pharaohRevival")
 
-	victim:Revive(GetGlobalInt("ttt_ankh_respawn_time", 10),
-		function(ply)
-			-- set state to ank that a player is no longer reviving
-			ply.ankh:SetNWBool("isReviving", false)
-			ply.ankh.revivingPlayer = nil
+		-- set state to ank that a player is reviving
+		PHARAOH_HANDLER.ankhs[id].ankh:SetNWBool("isReviving", true)
+		PHARAOH_HANDLER.ankhs[id].ankh.revivingPlayer = victim
 
-			-- destroying the ankh on revival
-			PHARAOH_HANDLER:DestroyAnkh(ply.ankh, ply, true)
+		local ankh_pos = PHARAOH_HANDLER.ankhs[id].ankh:GetPos() + Vector(0, 0, 2.5)
 
-			-- set player HP to 50
-			ply:SetHealth(50)
+		victim:Revive(GetGlobalInt("ttt_ankh_respawn_time", 10),
+			function(ply)
+				-- set state to ank that a player is no longer reviving
+				PHARAOH_HANDLER.ankhs[id].ankh:SetNWBool("isReviving", false)
+				PHARAOH_HANDLER.ankhs[id].ankh.revivingPlayer = nil
 
-			-- spawn smoke
-			PHARAOH_HANDLER:SpawnEffects(ankh_pos)
+				-- destroying the ankh on revival
+				PHARAOH_HANDLER.ankhs[id].ankh.using_to_revive = true
+				PHARAOH_HANDLER.ankhs[id].ankh:Remove()
 
-			-- play sound
-			sound.Play("ankh_respawn", ankh_pos, 200, 100, 1.0)
+				-- set player HP to 50
+				ply:SetHealth(50)
 
-			-- remove popup
-			PHARAOH_HANDLER:RemovePopup(ply, "pharaohRevival")
+				-- spawn smoke
+				PHARAOH_HANDLER:SpawnEffects(ankh_pos)
 
-			-- give some spawn protextion
-			PHARAOH_HANDLER:GiveSpawnProtection(ply)
+				-- play sound
+				sound.Play("ankh_respawn", ankh_pos, 200, 100, 1.0)
 
-			-- trigger the event for the scoreboard
-			events.Trigger(EVENT_ANKH_REVIVE, ply)
-		end,
-		function(ply)
-			-- make sure the revival is still valid
-			return GetRoundState() == ROUND_ACTIVE and IsValid(ply) and not ply:Alive() and IsValid(ply.ankh) and ply == ply.ankh:GetOwner()
-		end,
-		false, -- no corpse needed for respawn
-		true, -- force revival
-		nil,
-		ankh_pos
-	)
-end)
+				-- remove popup
+				PHARAOH_HANDLER:RemovePopup(ply, "pharaohRevival")
 
-hook.Add("TTTBeginRound", "ttt2_role_pharaoh_reset", function()
-	for _, p in pairs(player.GetAll()) do
-		p.ankh_data = nil
-	end
-end)
+				-- give some spawn protextion
+				PHARAOH_HANDLER:GiveSpawnProtection(ply)
+
+				-- trigger the event for the scoreboard
+				events.Trigger(EVENT_ANKH_REVIVE, ply)
+			end,
+			function(ply)
+				-- make sure the revival is still valid
+				return GetRoundState() == ROUND_ACTIVE and IsValid(ply) and not ply:Alive() and IsValid(PHARAOH_HANDLER.ankhs[id].ankh) and ply == PHARAOH_HANDLER.ankhs[id].ankh:GetOwner()
+			end,
+			false, -- no corpse needed for respawn
+			true, -- force revival
+			nil,
+			ankh_pos
+		)
+	end)
+
+	hook.Add("TTTBeginRound", "ttt2_role_pharaoh_reset", function()
+		PHARAOH_HANDLER.ankhs = {}
+	end)
+end
