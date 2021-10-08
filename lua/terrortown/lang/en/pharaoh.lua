@@ -15,7 +15,7 @@ Search for the placed Ankh and try to use it for your benefit!]]
 L["body_found_" .. GRAVEROBBER.abbr] = "They were a Graverobber."
 L["search_role_" .. GRAVEROBBER.abbr] = "This person was a Graverobber!"
 L["target_" .. GRAVEROBBER.name] = "Graverobber"
-L["ttt2_desc_" .. GRAVEROBBER.name] = [[The Graverobber is a player in the traitor team that is the adversary of the pharaoh.]]
+L["ttt2_desc_" .. GRAVEROBBER.name] = [[The Graverobber is a player in the traitor team that is the adversary of the Pharaoh.]]
 
 -- OTHER ROLE LANGUAGE STRINGS
 L["ttt2_weapon_ankh_name"] = "Ankh"

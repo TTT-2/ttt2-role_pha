@@ -180,25 +180,13 @@ function ENT:UseOverride(activator)
 	self:Remove()
 end
 
-local function CanAttackerDamagePlys(attacker)
-	if JESTER and attacker:GetSubRole() == ROLE_JESTER then
-		return false
-	end
-	if MARKER and attacker:GetSubRole() == ROLE_MARKER and GetConVar("ttt_mark_deal_no_damage"):GetBool() then
-		return false
-	end
-	if CURSED and attacker:GetSubRole() == ROLE_CURSED then
-		return false
-	end
-
-	return true
-end
-
 function ENT:OnTakeDamage(dmginfo)
 	local attacker = dmginfo:GetAttacker()
 
-	-- special roles that deal no damage to players shouldn't be able to damage the ankh (leads to griefing)
-	if not CanAttackerDamagePlys(attacker) then
+	---
+	-- @note Special roles that deal no damage to players shouldn't be able to damage the ankh (leads to griefing)
+	-- @realm server
+	if hook.Run("TTT2PharaohPreventDamageToAnkh", attacker) then
 		return
 	end
 
