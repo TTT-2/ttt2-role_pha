@@ -42,6 +42,7 @@ L["ankh_revival_canceled"] = "Revival Canceled"
 L["ankh_revival_canceled_text"] = "Your revival was canceled because your ankh has been destroyed."
 L["ankh_insufficient_room"] = "Insufficient room."
 L["ankh_owner_is_reviving"] = "Conversion blocked - owner is reviving"
+L["ankh_all_gone"] = "All ankhs have been destroyed and so your old role has been returned to you."
 
 L["tooltip_ankh_conversion_score"] = "Ankh stolen: {score}"
 L["ankh_conversion_score"] = "Ankh stolen:"
