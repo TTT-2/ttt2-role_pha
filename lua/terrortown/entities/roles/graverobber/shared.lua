@@ -44,7 +44,7 @@ if SERVER then
 	end
 
 	function ROLE:RemoveRoleLoadout(ply, isRoleChange)
-		ply:StripWeapon('weapon_ttt_ankh')
+		ply:StripWeapon("weapon_ttt_ankh")
 
 		-- Since we're removing any ankh the graverobber happens to own, we need to remove the data as well.
 		PHARAOH_HANDLER:RemoveAnkhDataFromLoadout(ply)

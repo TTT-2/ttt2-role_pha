@@ -129,7 +129,7 @@ if SERVER then
 		for original_owner_id, ankh_data in pairs(self.ankhs) do
 			if ankh_data.ankh == ent then
 				ankh_data.current_owner_id = ply:SteamID64()
-				ankh_data.ankh:SetNWBool("is_stolen", original_owner_id != ply:SteamID64())
+				ankh_data.ankh:SetNWBool("is_stolen", original_owner_id ~= ply:SteamID64())
 
 				return original_owner_id
 			end
@@ -142,7 +142,7 @@ if SERVER then
 		for original_owner_id, ankh_data in pairs(self.ankhs) do
 			if ankh_data.current_owner_id == placer:SteamID64() then
 				ankh_data.ankh = ent
-				ankh_data.ankh:SetNWBool("is_stolen", original_owner_id != placer:SteamID64())
+				ankh_data.ankh:SetNWBool("is_stolen", original_owner_id ~= placer:SteamID64())
 
 				return original_owner_id
 			end
@@ -173,8 +173,9 @@ if SERVER then
 				ankh_data.ankh = nil
 
 				-- update all players on what ankh(s) they can convert, in case the entity index of their current target becomes stale.
-				for _, ply in ipairs(player.GetAll()) do
-					PHARAOH_HANDLER:SetClientCanConvAnkh(ply)
+				local plys = player.GetAll()
+				for i = 1, #plys do
+					PHARAOH_HANDLER:SetClientCanConvAnkh(plys[i])
 				end
 
 				return original_owner_id
@@ -185,7 +186,10 @@ if SERVER then
 	function PHARAOH_HANDLER:RevertUnnecessaryGraverobbers()
 		if #self.ankhs == 0 then
 			-- now that all ankhs are gone, give back all graverobbers their original role if possible
-			for _, ply in ipairs(player.GetAll()) do
+			local plys = player.GetAll()
+			for i = 1, #plys do
+				local ply = plys[i]
+
 				if ply:IsTerror() and ply:GetSubRole() == ROLE_GRAVEROBBER and ply.grav_prev_role then
 					LANG.Msg(ply, "ankh_all_gone")
 					ply:SetRole(ply.grav_prev_role, ply:GetTeam())
@@ -234,8 +238,9 @@ if SERVER then
 		end
 
 		-- update all players on what ankh(s) they can convert, in case the entity index of their current target becomes stale.
-		for _, ply in ipairs(player.GetAll()) do
-			PHARAOH_HANDLER:SetClientCanConvAnkh(ply)
+		local plys = player.GetAll()
+		for i = 1, #plys do
+			PHARAOH_HANDLER:SetClientCanConvAnkh(plys[i])
 		end
 
 		-- set the hp of the ankh
@@ -341,7 +346,10 @@ if SERVER then
 		end
 
 		-- notify all graverobbers that an ankh was broken
-		for _, ply in ipairs(player.GetAll()) do
+		local plys = player.GetAll()
+		for i = 1, #plys do
+			local ply = plys[i]
+
 			if ply:GetSubRole() == ROLE_GRAVEROBBER and ent:GetOwner() ~= ply then
 				LANG.Msg(ply, "ankh_broken_adv")
 			end
@@ -500,8 +508,6 @@ function PHARAOH_HANDLER:StopSound(soundname, target)
 end
 
 if CLIENT then
-	local zapsound = Sound("npc/assassin/ball_zap1.wav")
-
 	local smokeparticles = {
 		Model("particle/particle_smokegrenade"),
 		Model("particle/particle_noisesphere")
@@ -793,8 +799,9 @@ if SERVER then
 	hook.Add("TTTBeginRound", "ttt2_role_pharaoh_reset", function()
 		PHARAOH_HANDLER.ankhs = {}
 
-		for _, ply in ipairs(player.GetAll()) do
-			ply.grav_prev_role = nil
+		local plys = player.GetAll()
+		for i = 1, #plys do
+			plys[i].grav_prev_role = nil
 		end
 	end)
 end
