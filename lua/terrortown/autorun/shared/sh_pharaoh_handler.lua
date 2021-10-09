@@ -182,6 +182,20 @@ if SERVER then
 		end
 	end
 
+	function PHARAOH_HANDLER:RevertUnnecessaryGraverobbers()
+		if #self.ankhs == 0 then
+			-- now that all ankhs are gone, give back all graverobbers their original role if possible
+			for _, ply in ipairs(player.GetAll()) do
+				if ply:IsTerror() and ply:GetSubRole() == ROLE_GRAVEROBBER and ply.grav_prev_role then
+					LANG.Msg(ply, "ankh_all_gone")
+					ply:SetRole(ply.grav_prev_role, ply:GetTeam())
+				end
+
+				ply.grav_prev_role = nil
+			end
+		end
+	end
+
 	function PHARAOH_HANDLER:RemoveAnkhData(ply)
 		-- explicitly check the validity of the player here, as they may have disconnected.
 		if not IsValid(ply) then
@@ -191,6 +205,7 @@ if SERVER then
 		for original_owner_id, ankh_data in pairs(self.ankhs) do
 			if ankh_data.current_owner_id == ply:SteamID64() then
 				self.ankhs[original_owner_id] = nil
+				PHARAOH_HANDLER:RevertUnnecessaryGraverobbers()
 				break
 			end
 		end
@@ -206,6 +221,7 @@ if SERVER then
 
 			-- if a valid player is found, he should be converted
 			if p_graverobber then
+				p_graverobber.grav_prev_role = p_graverobber:GetSubRole()
 				p_graverobber:SetRole(ROLE_GRAVEROBBER)
 				SendFullStateUpdate()
 
@@ -285,6 +301,7 @@ if SERVER then
 		for original_owner_id, ankh_data in pairs(self.ankhs) do
 			if ankh_data.current_owner_id == ply:SteamID64() and not IsValid(ankh_data.ankh) then
 				self.ankhs[original_owner_id] = nil
+				PHARAOH_HANDLER:RevertUnnecessaryGraverobbers()
 				break
 			end
 		end
@@ -607,6 +624,13 @@ if CLIENT then
 	end)
 end
 
+local function PlayerCanBeAGraverobber(ply)
+	---
+	-- @note Special Traitor roles can opt out of being selected to become Graverobbers (ex. Defective)
+	-- @realm shared
+	return ply:GetBaseRole() == ROLE_TRAITOR and ply:IsTerror() and not hook.Run("TTT2GraverobberPreventSelection", ply)
+end
+
 ---
 -- Returns a player that can be converted to a graverobber
 -- Vanilla T players are preferred, other team traitor players are used as
@@ -629,7 +653,7 @@ function PHARAOH_HANDLER:SelectGraverobber()
 			p_vanilla_traitor[#p_vanilla_traitor + 1] = ply
 		end
 
-		if ply:GetBaseRole() == ROLE_TRAITOR and ply:IsTerror() then
+		if PlayerCanBeAGraverobber(ply) then
 			p_team_traitor[#p_team_traitor + 1] = ply
 		end
 	end
@@ -662,7 +686,7 @@ function PHARAOH_HANDLER:CanPlaceAnkh(placer)
 	for i = 1, #plys do
 		local ply = plys[i]
 
-		if ply:GetTeam() == TEAM_TRAITOR and ply:IsTerror() then
+		if PlayerCanBeAGraverobber(ply) then
 			return true
 		end
 	end
@@ -768,5 +792,9 @@ if SERVER then
 
 	hook.Add("TTTBeginRound", "ttt2_role_pharaoh_reset", function()
 		PHARAOH_HANDLER.ankhs = {}
+
+		for _, ply in ipairs(player.GetAll()) do
+			ply.grav_prev_role = nil
+		end
 	end)
 end
