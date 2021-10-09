@@ -730,11 +730,24 @@ function PHARAOH_HANDLER:GiveSpawnProtection(ply)
 end
 
 if SERVER then
+	-- use this to detect the usage of the kill command
+	hook.Add("CanPlayerSuicide", "ttt2_role_pharaoh_detect_suicide", function(ply)
+		if not ply:IsActive() and ply:GetSubRole() ~= ROLE_PHARAOH and ply:GetSubRole() ~= ROLE_TRAITOR then return end
+
+		ply.committed_suicide = true
+	end )
 	---
 	-- using TTT2PostPlayerDeath hook here, since it is called at the very last, addons like
 	-- a second change are triggered prior to this hook (SERVER ONLY)
 	hook.Add("TTT2PostPlayerDeath", "ttt2_role_pharaoh_death", function(victim, inflictor, attacker)
 		if not IsValid(victim) then return end
+
+		-- make sure that forced suicide does not trigger a revive
+		local wasForcedSuicide = victim.committed_suicide
+
+		victim.committed_suicide = nil
+
+		if wasForcedSuicide then return end
 
 		-- Any ankhs that the ply will have in their loadout will be removed when they die. So remove the associated ankh_data as well.
 		PHARAOH_HANDLER:RemoveAnkhDataFromLoadout(victim)
@@ -743,6 +756,7 @@ if SERVER then
 
 		-- victim must be either a pharaoh or graverobber with an ankh
 		local id = PHARAOH_HANDLER:PlayerCanReviveWithThisAnkhDataId(victim)
+
 		if not PHARAOH_HANDLER.ankhs[id] or not IsValid(PHARAOH_HANDLER.ankhs[id].ankh) then return end
 
 		-- the victim must be the current owner of the ankh
@@ -787,7 +801,8 @@ if SERVER then
 			end,
 			function(ply)
 				-- make sure the revival is still valid
-				return GetRoundState() == ROUND_ACTIVE and IsValid(ply) and not ply:Alive() and IsValid(PHARAOH_HANDLER.ankhs[id].ankh) and ply == PHARAOH_HANDLER.ankhs[id].ankh:GetOwner()
+				return GetRoundState() == ROUND_ACTIVE and IsValid(ply) and not ply:IsActive()
+					and IsValid(PHARAOH_HANDLER.ankhs[id].ankh) and ply == PHARAOH_HANDLER.ankhs[id].ankh:GetOwner()
 			end,
 			false, -- no corpse needed for respawn
 			true, -- force revival
@@ -801,7 +816,10 @@ if SERVER then
 
 		local plys = player.GetAll()
 		for i = 1, #plys do
-			plys[i].grav_prev_role = nil
+			local ply = plys[i]
+
+			ply.grav_prev_role = nil
+			ply.committed_suicide = nil
 		end
 	end)
 end
