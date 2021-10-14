@@ -13,8 +13,6 @@ function ROLE:PreInitialize()
 	self.score.killsMultiplier = 2
 	self.score.teamKillsMultiplier = -8
 	self.preventFindCredits = true
-	self.preventKillCredits = true
-	self.preventTraitorAloneCredits = true
 	self.preventWin = false
 	self.unknownTeam = true
 
@@ -24,10 +22,12 @@ function ROLE:PreInitialize()
 		pct = 0.17, -- necessary: percentage of getting this role selected (per player)
 		maximum = 1, -- maximum amount of roles in a round
 		minPlayers = 6, -- minimum amount of players until this role is able to get selected
-		credits = 0, -- the starting credits of a specific role
 		shopFallback = SHOP_DISABLED,
 		togglable = true, -- option to toggle a role for a client if possible (F1 menu)
-		random = 50
+		random = 50,
+		credits = 0,
+		creditsAwardDeadEnable = 0,
+		creditsAwardKillEnable = 0,
 	}
 end
 
