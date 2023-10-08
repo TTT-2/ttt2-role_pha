@@ -56,3 +56,66 @@ if SERVER then
 		PHARAOH_HANDLER:RemoveAnkhDataFromLoadout(ply)
 	end
 end
+
+if CLIENT then
+	function ROLE:AddToSettingsMenu(parent)
+		local form = vgui.CreateTTT2Form(parent, "header_roles_additional")
+
+		form:MakeSlider({
+			serverConvar = "ttt_ankh_health",
+			label = "label_ankh_health",
+			min = 10,
+			max = 1000,
+			decimal = 0
+		})
+
+		form:MakeSlider({
+			serverConvar = "ttt_ankh_conversion_time",
+			label = "label_ankh_conversion_time",
+			min = 0,
+			max = 10,
+			decimal = 0
+		})
+
+		form:MakeSlider({
+			serverConvar = "ttt_ankh_respawn_time",
+			label = "label_ankh_respawn_time",
+			min = 1,
+			max = 20,
+			decimal = 0
+		})
+
+		form:MakeCheckBox({
+			serverConvar = "ttt_ankh_pharaoh_pickup",
+			label = "label_ankh_pharaoh_pickup"
+		})
+
+		form:MakeCheckBox({
+			serverConvar = "ttt_ankh_graverobber_pickup",
+			label = "label_ankh_graverobber_pickup"
+		})
+
+		form:MakeCheckBox({
+			serverConvar = "ttt_ankh_heal_ankh",
+			label = "label_ankh_heal_ankh"
+		})
+
+		form:MakeCheckBox({
+			serverConvar = "ttt_ankh_heal_owner",
+			label = "label_ankh_heal_owner"
+		})
+
+		form:MakeCheckBox({
+			serverConvar = "ttt_ankh_light_up",
+			label = "label_ankh_light_up"
+		})
+
+		form:MakeSlider({
+			serverConvar = "ttt_ankh_respawn_protection_time",
+			label = "label_ankh_respawn_protection_time",
+			min = 1,
+			max = 10,
+			decimal = 0
+		})
+	end
+end

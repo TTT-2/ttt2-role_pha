@@ -50,3 +50,13 @@ L["ankh_owner_is_reviving"] = "Conversion bloquée - Le propriétaire est en tra
 --L["desc_event_ankh_destroyed"] = "{attacker} ({arole} / {ateam}) has destroyed the ankh of {old} ({orole} / {oteam})."
 --L["title_event_ankh_revive"] = "A player revived at their ankh"
 --L["desc_event_ankh_revive"] = "{owner} ({role} / {team}) use their ankh to come back into life."
+
+--L["label_ankh_health"] = "Ankh's HP"
+--L["label_ankh_conversion_time"] = "Time it takes to convert the ankh"
+--L["label_ankh_respawn_time"] = "Time until respawn"
+--L["label_ankh_pharaoh_pickup"] = "Pharaoh can pick up their ankh"
+--L["label_ankh_graverobber_pickup"] = "Graverobber can pick up their ankh"
+--L["label_ankh_heal_ankh"] = "Ankh heals itself if the owner is close by"
+--L["label_ankh_heal_owner"] = "Ankh heals the owner if they're close by"
+--L["label_ankh_light_up"] = "Ankh lights up if its owner is close by"
+--L["label_ankh_respawn_protection_time"] = "Owner's protection time post-respawn"

@@ -19,10 +19,12 @@ function ENT:Initialize()
 	self:WeldToGround(true)
 
 	if SERVER then
-		self:SetMaxHealth(GetGlobalInt("ttt_ankh_health"))
+		self:SetMaxHealth(GetConVar("ttt_ankh_health"):GetInt())
 
 		self:SetUseType(CONTINUOUS_USE)
 	end
+
+	self.low_health_threshold = GetConVar("ttt_ankh_health"):GetInt() * 0.1
 
 	-- start ankh handling
 	if SERVER then
@@ -49,7 +51,7 @@ end
 function ENT:UpdateProgress()
 	local elapsed_time = self.t_transfer_start and (CurTime() - self.t_transfer_start) or 0
 
-	self:SetNWInt("conversion_progress", math.Round(elapsed_time / GetGlobalInt("ttt_ankh_conversion_time", 0) * 100, 0))
+	self:SetNWInt("conversion_progress", math.Round(elapsed_time / GetConVar("ttt_ankh_conversion_time"):GetInt() * 100, 0))
 end
 
 if SERVER then
@@ -70,10 +72,10 @@ if SERVER then
 		if not IsValid(ply) then return end
 
 		-- heal ent
-		if GetGlobalBool("ttt_ankh_heal_ankh", false) and (not self.t_heal_ent or CurTime() > self.t_heal_ent) then
+		if GetConVar("ttt_ankh_heal_ankh"):GetBool() and (not self.t_heal_ent or CurTime() > self.t_heal_ent) then
 			self:SetHealth(math.min(self:GetMaxHealth(), self:Health() + 1))
 
-			if self:Health() <= GetGlobalInt("ttt_ankh_low_health", 0) then
+			if self:Health() <= self.low_health_threshold then
 				self.t_heal_ent = CurTime() + 0.1
 			else
 				self.t_heal_ent = CurTime() + 0.5
@@ -81,7 +83,7 @@ if SERVER then
 		end
 
 		-- heal player
-		if GetGlobalBool("ttt_ankh_heal_owner", false) and self:Health() > GetGlobalInt("ttt_ankh_low_health", 0)
+		if GetConVar("ttt_ankh_heal_owner"):GetBool() and self:Health() > self.low_health_threshold
 		and (not self.t_heal_ply or CurTime() > self.t_heal_ply) then
 			ply:SetHealth(math.min(ply:GetMaxHealth(), ply:Health() + 1))
 
@@ -144,7 +146,7 @@ function ENT:Use(activator, caller, type, value)
 		PHARAOH_HANDLER:StartConversion(self, activator)
 	end
 
-	if CurTime() - self.t_transfer_start > GetGlobalInt("ttt_ankh_conversion_time", 0) then
+	if CurTime() - self.t_transfer_start > GetConVar("ttt_ankh_conversion_time"):GetInt() then
 		PHARAOH_HANDLER:TransferAnkhOwnership(self, activator)
 		self.t_transfer_start = nil
 	end
@@ -262,7 +264,7 @@ if CLIENT then
 		end
 
 		-- if the ankhs HP is low, let the light flicker
-		if self:Health() <= GetGlobalInt("ttt_ankh_low_health", 0) and CurTime() > self.light_next_state then
+		if self:Health() <= self.low_health_threshold and CurTime() > self.light_next_state then
 			self.light_next_state = CurTime() + math.Rand(0, 0.5)
 
 			if self.light_state > 2 then
@@ -305,7 +307,7 @@ if CLIENT then
 		-- calculate the brightness, if the owner is in close range, it should light up brighter
 		local brightness = 2
 
-		if GetGlobalBool("ttt_ankh_light_up", false) then
+		if GetConVar("ttt_ankh_light_up"):GetBool() then
 			local plys = player.GetAll()
 			for i = 1, #plys do
 				if plys[i] == self:GetOwner() and self:GetPos():Distance(plys[i]:GetPos()) < 100 then
@@ -383,8 +385,8 @@ if CLIENT then
 		end
 
 		tData:AddDescriptionLine(
-			LANG.GetParamTranslation("ankh_health_points", {health = ent:Health(), maxhealth = GetGlobalInt("ttt_ankh_health")}),
-			ent:Health() > GetGlobalInt("ttt_ankh_low_health", 0) and DETECTIVE.ltcolor or COLOR_ORANGE
+			LANG.GetParamTranslation("ankh_health_points", {health = ent:Health(), maxhealth = GetConVar("ttt_ankh_health"):GetInt()}),
+			ent:Health() > ent.low_health_threshold and DETECTIVE.ltcolor or COLOR_ORANGE
 		)
 	end)
 end
