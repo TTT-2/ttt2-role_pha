@@ -118,7 +118,7 @@ if SERVER then
 		self.ankhs[placer_id] = {
 			current_owner_id = placer_id,
 			ankh = ent,
-			health = GetGlobalInt("ttt_ankh_health")
+			health = GetConVar("ttt_ankh_health"):GetInt()
 		}
 		self.ankhs[placer_id].ankh:SetNWBool("is_stolen", false)
 
@@ -392,10 +392,10 @@ function PHARAOH_HANDLER:CanPickUpAnkh(ent, ply)
 	end
 
 	-- check if this roles is allowed to pick up
-	if ply:GetSubRole() == ROLE_PHARAOH and not GetGlobalBool("ttt_ankh_pharaoh_pickup", false) then
+	if ply:GetSubRole() == ROLE_PHARAOH and not GetConVar("ttt_ankh_pharaoh_pickup"):GetBool() then
 		return false
 	end
-	if ply:GetSubRole() == ROLE_GRAVEROBBER and not GetGlobalBool("ttt_ankh_graverobber_pickup", false) then
+	if ply:GetSubRole() == ROLE_GRAVEROBBER and not GetConVar("ttt_ankh_graverobber_pickup"):GetBool() then
 		return false
 	end
 
@@ -599,8 +599,8 @@ if CLIENT then
 						text = LANG.GetTranslation("ankh_revival"),
 						color = PHARAOH.ltcolor
 					},
-					LANG.GetParamTranslation("ankh_revival_text", {time = GetGlobalInt("ttt_ankh_respawn_time", 10)}),
-					GetGlobalInt("ttt_ankh_respawn_time", 10)
+					LANG.GetParamTranslation("ankh_revival_text", {time = GetConVar("ttt_ankh_respawn_time"):GetInt()}),
+					GetConVar("ttt_ankh_respawn_time"):GetInt()
 				)
 			elseif id == "pharaohRevivalCanceled" then
 				client.epopId[id] = EPOP:AddMessage(
@@ -771,8 +771,9 @@ if SERVER then
 
 		local ankh_pos = PHARAOH_HANDLER.ankhs[id].ankh:GetPos() + Vector(0, 0, 2.5)
 
-		victim:Revive(GetGlobalInt("ttt_ankh_respawn_time", 10),
-			function(ply)
+		victim:Revive(
+			GetConVar("ttt_ankh_respawn_time", 10):GetInt(), -- respawn delay
+			function(ply) -- OnRevive function
 				-- set state to ank that a player is no longer reviving
 				PHARAOH_HANDLER.ankhs[id].ankh:SetNWBool("isReviving", false)
 				PHARAOH_HANDLER.ankhs[id].ankh.revivingPlayer = nil
@@ -799,15 +800,16 @@ if SERVER then
 				-- trigger the event for the scoreboard
 				events.Trigger(EVENT_ANKH_REVIVE, ply)
 			end,
-			function(ply)
+			function(ply) -- DoCheck function
 				-- make sure the revival is still valid
 				return GetRoundState() == ROUND_ACTIVE and IsValid(ply) and not ply:IsActive()
 					and IsValid(PHARAOH_HANDLER.ankhs[id].ankh) and ply == PHARAOH_HANDLER.ankhs[id].ankh:GetOwner()
 			end,
-			false, -- no corpse needed for respawn
-			true, -- force revival
-			nil,
-			ankh_pos
+			false, -- needsCorpse
+			REVIVAL_BLOCK_AS_ALIVE, -- blocksRound (Prevents anyone from winning during respawn delay)
+			nil, -- OnFail function
+			ankh_pos, -- spawnPos (nil: player's respawn point will be their corpse if present, and their point of death otherwise)
+			nil -- spawnEyeAngle
 		)
 	end)
 
