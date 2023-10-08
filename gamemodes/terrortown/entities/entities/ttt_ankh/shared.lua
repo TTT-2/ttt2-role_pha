@@ -24,6 +24,8 @@ function ENT:Initialize()
 		self:SetUseType(CONTINUOUS_USE)
 	end
 
+	self.low_health_threshold = GetConVar("ttt_ankh_health"):GetInt() * 0.1
+
 	-- start ankh handling
 	if SERVER then
 		PHARAOH_HANDLER:PlacedAnkh(self, self:GetOwner())
@@ -73,7 +75,7 @@ if SERVER then
 		if GetConVar("ttt_ankh_heal_ankh"):GetBool() and (not self.t_heal_ent or CurTime() > self.t_heal_ent) then
 			self:SetHealth(math.min(self:GetMaxHealth(), self:Health() + 1))
 
-			if self:Health() <= GetConVar("ttt_ankh_low_health"):GetInt() then
+			if self:Health() <= self.low_health_threshold then
 				self.t_heal_ent = CurTime() + 0.1
 			else
 				self.t_heal_ent = CurTime() + 0.5
@@ -81,7 +83,7 @@ if SERVER then
 		end
 
 		-- heal player
-		if GetConVar("ttt_ankh_heal_owner"):GetBool() and self:Health() > GetConVar("ttt_ankh_low_health"):GetInt()
+		if GetConVar("ttt_ankh_heal_owner"):GetBool() and self:Health() > self.low_health_threshold
 		and (not self.t_heal_ply or CurTime() > self.t_heal_ply) then
 			ply:SetHealth(math.min(ply:GetMaxHealth(), ply:Health() + 1))
 
@@ -262,7 +264,7 @@ if CLIENT then
 		end
 
 		-- if the ankhs HP is low, let the light flicker
-		if self:Health() <= GetConVar("ttt_ankh_low_health"):GetInt() and CurTime() > self.light_next_state then
+		if self:Health() <= self.low_health_threshold and CurTime() > self.light_next_state then
 			self.light_next_state = CurTime() + math.Rand(0, 0.5)
 
 			if self.light_state > 2 then
@@ -384,7 +386,7 @@ if CLIENT then
 
 		tData:AddDescriptionLine(
 			LANG.GetParamTranslation("ankh_health_points", {health = ent:Health(), maxhealth = GetConVar("ttt_ankh_health"):GetInt()}),
-			ent:Health() > GetConVar("ttt_ankh_low_health"):GetInt() and DETECTIVE.ltcolor or COLOR_ORANGE
+			ent:Health() > ent.low_health_threshold and DETECTIVE.ltcolor or COLOR_ORANGE
 		)
 	end)
 end

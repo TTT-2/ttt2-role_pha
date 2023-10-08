@@ -61,4 +61,3 @@ L["ankh_owner_is_reviving"] = "Conversión bloqueada - El dueño está renaciend
 --L["label_ankh_heal_owner"] = "Ankh heals the owner if they're close by"
 --L["label_ankh_light_up"] = "Ankh lights up if its owner is close by"
 --L["label_ankh_respawn_protection_time"] = "Owner's protection time post-respawn"
---L["label_ankh_low_health"] = "Ankh's low HP threshold"

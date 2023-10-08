@@ -117,13 +117,5 @@ if CLIENT then
 			max = 10,
 			decimal = 0
 		})
-
-		form:MakeSlider({
-			serverConvar = "ttt_ankh_low_health",
-			label = "label_ankh_low_health",
-			min = 10,
-			max = 1000,
-			decimal = 0
-		})
 	end
 end
