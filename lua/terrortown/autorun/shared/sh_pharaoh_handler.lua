@@ -772,7 +772,7 @@ if SERVER then
 		local ankh_pos = PHARAOH_HANDLER.ankhs[id].ankh:GetPos() + Vector(0, 0, 2.5)
 
 		victim:Revive(
-			GetConVar("ttt_ankh_respawn_time", 10):GetInt(), -- respawn delay
+			GetConVar("ttt_ankh_respawn_time"):GetInt(), -- respawn delay
 			function(ply) -- OnRevive function
 				-- set state to ank that a player is no longer reviving
 				PHARAOH_HANDLER.ankhs[id].ankh:SetNWBool("isReviving", false)
